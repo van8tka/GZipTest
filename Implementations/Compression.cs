@@ -2,47 +2,21 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression; 
-using System.Threading;
+using System.IO.Compression;
  
 
 namespace GZipTest_1.Implementations
 {
-    internal class Compression:AbstractArchiver, ICompression
+    internal class Compression : AbstractArchiver, ICompression
     {
         //ctor
-        internal Compression(string inputfile, string outputfile):base(inputfile, outputfile) { }
+        internal Compression(string inputfile, string outputfile) : base(inputfile, outputfile) { }
 
 
         public override bool Start()
         {
-            try
-            {
-                Console.WriteLine("Started compressing..");
-                var readThread = new Thread(ReadData);
-                readThread.Start();
-
-                var threads = new Thread[CountProcessors()];
-                for (int i = 0; i < threads.Length; i++)
-                {
-                    ManualResetEventArray[i] = new ManualResetEvent(false);
-                    threads[i] = new Thread(CompressData);
-                    threads[i].Start(i);
-                }
-
-                var writeThread = new Thread(WriteData);
-                writeThread.Start();
-
-                WaitHandle.WaitAll(ManualResetEventArray);
-                Success = true;                                            
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                Debugger.Break();
-                Success = false;
-            }           
-            return Success;
+            Console.WriteLine(" Started compressing..");
+            return Start(CompressData);
         }
 
         public override void ReadData()
@@ -53,7 +27,7 @@ namespace GZipTest_1.Implementations
                 {
                     var lenght = input.Length;
                     while (input.Position < lenght)
-                    {                                           
+                    {
                         int readCount;
                         if (lenght - input.Position < BlockSize)
                             readCount = (int)(lenght - input.Position);
@@ -61,8 +35,9 @@ namespace GZipTest_1.Implementations
                             readCount = BlockSize;
                         var bytes = new byte[readCount];
                         input.Read(bytes, 0, readCount);
+                        CountReadBlocks();
                         BlockReaded.TryAdd(bytes);
-                        OutputProgress(input.Position, input.Length, "compression"); 
+                        OutputProgress(input.Position, input.Length, "compression");
                     }
                 }
             }
@@ -72,7 +47,7 @@ namespace GZipTest_1.Implementations
                 Debugger.Break();
             }
         }
- 
+
 
         public void CompressData(object indexThread)
         {
@@ -89,6 +64,7 @@ namespace GZipTest_1.Implementations
                             {
                                 gzipStream.Write(bytes, 0, bytes.Length);
                             }
+                            CountZipBlocks();
                             BlockForWrite.TryAdd(memStream.ToArray());
                         }
                         ManualResetEventArray[(int)indexThread].Set();
@@ -103,6 +79,13 @@ namespace GZipTest_1.Implementations
                 Debugger.Break();
             }
         }
+
+        //private void AddedExtenstion(Stream stream, string inputFile)
+        //{
+        //     string extenstion = Path.GetExtension(inputFile);
+        //     var bytes = Encoding.Default.GetBytes(extenstion);
+        //     stream.Write(bytes, 0, bytes.Length);
+        //}
 
         public override void WriteData()
         {
@@ -121,6 +104,7 @@ namespace GZipTest_1.Implementations
                             //времени модификации файла в формате Unix (спецификация gzip)
                             lenghtOfBlock.CopyTo(bytes, 4);
                             outputStream.Write(bytes, 0, bytes.Length);
+                            CountWriteBlocks();
                         }
                     }
                     else

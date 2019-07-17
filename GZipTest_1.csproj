@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentsValidator.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="Implementations\Compression.cs" />
     <Compile Include="Implementations\Decompression.cs" />
     <Compile Include="Interfaces\IArchiver.cs" />

@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Threading;
+
 
 namespace GZipTest_1.Implementations
 {
@@ -13,33 +13,8 @@ namespace GZipTest_1.Implementations
 
         public override bool Start()
         {
-            try
-            {
-                Console.WriteLine("Started decompressing..");
-                var threadRead = new Thread(ReadData);
-                threadRead.Start();
-
-                var threads = new Thread[CountProcessors()];
-                for (int i = 0; i < threads.Length; i++)
-                {
-                    ManualResetEventArray[i] = new ManualResetEvent(false);
-                    threads[i] = new Thread(DecompressData);
-                    threads[i].Start(i);
-                }
-
-                var threadWrite = new Thread(WriteData);
-                threadWrite.Start();
-
-                WaitHandle.WaitAll(ManualResetEventArray);
-                Success = true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                Debugger.Break();
-                Success = false;
-            }
-            return Success;
+            Console.WriteLine(" Started decompressing..");
+            return Start(DecompressData);
         }
 
 
@@ -49,7 +24,7 @@ namespace GZipTest_1.Implementations
             {
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
                 {
-                   
+
                     while (input.Position < input.Length)
                     {
                         var headerGzip = new byte[8];
@@ -60,6 +35,7 @@ namespace GZipTest_1.Implementations
                         headerGzip.CopyTo(bytes, 0);
 
                         input.Read(bytes, 8, lenghtBlock - 8);
+                        CountReadBlocks();
                         BlockReaded.TryAdd(bytes);
                         OutputProgress(input.Position, input.Length, "decompression");
                     }
@@ -71,6 +47,8 @@ namespace GZipTest_1.Implementations
                 Debugger.Break();
             }
         }
+
+
 
         public void DecompressData(object indexThread)
         {
@@ -86,18 +64,19 @@ namespace GZipTest_1.Implementations
                         {
                             using (var gzipStream = new GZipStream(memStream, CompressionMode.Decompress))
                             {
-                                byte[] hederBytes = new byte[4] {bytes[4], bytes[5], bytes[6], bytes[7] };                              
+                                byte[] hederBytes = new byte[4] { bytes[4], bytes[5], bytes[6], bytes[7] };
                                 int lenghtBlock = BitConverter.ToInt32(hederBytes, 0);
                                 int dataLenght = BitConverter.ToInt32(bytes, lenghtBlock - 4);
                                 byte[] data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
+                                CountZipBlocks();
                                 BlockForWrite.TryAdd(data);
                             }
                             ManualResetEventArray[(int)indexThread].Set();
                         }
                     }
                     else
-                       return;
+                        return;
                 }
             }
             catch (Exception e)
@@ -121,6 +100,7 @@ namespace GZipTest_1.Implementations
                         using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                         {
                             outputStream.Write(bytes, 0, bytes.Length);
+                            CountWriteBlocks();
                         }
                     }
                 }
