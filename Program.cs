@@ -7,8 +7,7 @@ namespace GZipTest
     {    
         static int Main(string[] args)
         {
-            Console.WriteLine("Set params: GZipTest.exe [compress\\decompress] [Path to input file] [Path to output file]");
-            Console.WriteLine("For example: GZipTest.exe compress D:\\input.txt D:\\output.gz");
+            StartedMessage();
             int result = 1;
             if (ArgumentsValidator.Validate(args))
             {
@@ -29,6 +28,13 @@ namespace GZipTest
             Console.ReadKey();
             return result;
         }
+
+        private static void StartedMessage()
+        {
+            Console.WriteLine("Set params: GZipTest.exe [compress\\decompress] [Path to input file] [Path to output file]");
+            Console.WriteLine("For example: GZipTest.exe compress D:\\input.txt D:\\output.gz");
+        }
+
         private static void FinishMessage(string message)
         {
             Console.WriteLine($"\n {message}");        

@@ -83,7 +83,7 @@ namespace GZipTest
             if (action.Equals(Constants.COMPRESS, StringComparison.OrdinalIgnoreCase) || action.Equals(Constants.DECOMPRESS, StringComparison.OrdinalIgnoreCase))
                 return true;
             else
-                Console.WriteLine("Ошибка указания параметра действия архиватора. Должно быть [compress\\decompress]");
+                Console.WriteLine("Ошибка указания параметра действия архиватора([compress\\decompress])");
             return false;
         }
 

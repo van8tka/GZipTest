@@ -31,6 +31,9 @@ namespace GZipTest.Implementations
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
 
+
+
+
         protected BlockingCollection<BlockData> BlockReaded { get; set; }
         protected BlockingCollection<BlockData> BlockForWrite { get; set; }
 
@@ -117,8 +120,8 @@ namespace GZipTest.Implementations
             {
                 if (disposing)
                 {
-                    foreach (var i in EventWaitHandleArray)
-                        i.Close();
+                    foreach (var handle in EventWaitHandleArray)
+                        handle.Close();
                     EventWaitHandleRead.Close();
                     EventWaitHandleWrite.Close();
                     BlockReaded.Dispose();
@@ -131,9 +134,7 @@ namespace GZipTest.Implementations
         public void Dispose()
         {         
             Dispose(true);           
-        }
-      
-       
+        }            
     }
 
 
