@@ -16,23 +16,21 @@ namespace GZipTest
             string action;
             string input;
             string output;
+            bool success = false;
             if (args.Length == 3)
             {
                 action = args[0];
                 input = args[1];
                 output = args[2];
                 if (CheckAction(action) && CheckInputFile(input) && CheckOutputFile(output))
-                    return true;
-                else
-                {
-                    Console.ReadLine();
-                    return false;
-                }
-                    
+                    success = true;                                
+            }  
+            if(!success)
+            {
+                Console.WriteLine("Error input parameters.");
+                Console.ReadLine();
             }          
-            Console.WriteLine("Ошибка входных параметров.");
-            Console.ReadLine();
-            return false;
+            return success;
         }
 
         private static bool CheckOutputFile(string output)
@@ -52,7 +50,7 @@ namespace GZipTest
             }
             catch (Exception e)
             {
-                Console.WriteLine("Ошибка в указании пути к выходному файлу." + e);
+                Console.WriteLine("Path to output file is not correct." + e);
                 return false;
             }
         }
@@ -67,12 +65,12 @@ namespace GZipTest
                 if (File.Exists(path))
                     return true;
                 else
-                    Console.WriteLine("Входной файл отсутствует или путь к файлу указан не верно.");
+                    Console.WriteLine("The input file is missing or path to file is not correct.");
                 return false;
             }
             catch (Exception e)
             {
-                Console.WriteLine("Ошибка в указании пути к входному файлу." + e);
+                Console.WriteLine("Path to input file is not correct." + e);
                 return false;
             }
         }
@@ -83,7 +81,7 @@ namespace GZipTest
             if (action.Equals(Constants.COMPRESS, StringComparison.OrdinalIgnoreCase) || action.Equals(Constants.DECOMPRESS, StringComparison.OrdinalIgnoreCase))
                 return true;
             else
-                Console.WriteLine("Ошибка указания параметра действия архиватора([compress\\decompress])");
+                Console.WriteLine("Is not correct action parameter([compress\\decompress]).");
             return false;
         }
 
@@ -94,14 +92,14 @@ namespace GZipTest
                 Regex driveRegex = new Regex(@"^[a-zA-Z]:\\$");
                 if (!driveRegex.IsMatch(path.Substring(0, 3)))
                 {
-                    Console.WriteLine("Указанного диска не существует или путь к файлу указан не верно.");
+                    Console.WriteLine("The disk is not exist or the file path is not correct.");
                     return false;
                 }
                 string invalidChars = new string(Path.GetInvalidPathChars()) + @":/?*" + "\"";
                 Regex invalidRegex = new Regex("[" + Regex.Escape(invalidChars) + "]");
                 if (invalidRegex.IsMatch(path.Substring(3, path.Length - 3)))
                 {
-                    Console.WriteLine("При  указании пути к файлу используются недопустимые символы.");
+                    Console.WriteLine("Invalid symbols in the file path.");
                     return false;
                 }
                 return true;

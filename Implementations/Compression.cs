@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
- 
+using System.Threading;
 
 namespace GZipTest.Implementations
 {
@@ -34,11 +34,14 @@ namespace GZipTest.Implementations
                         else
                             readCount = BlockSize;
                         var bytes = new byte[readCount];
-                        input.Read(bytes, 0, readCount);                     
-                        BlockReaded.TryAdd(new BlockData(id, bytes));
+                        input.Read(bytes, 0, readCount);
+
+                        while (BlockReaded.Count == BlockReaded.BoundedCapacity)
+                            Thread.Sleep(10);
+                        BlockReaded.Add(new BlockData(id, bytes));                       
                         id++;
                         OutputProgress(input.Position, input.Length, "compression");
-                    }
+                    }                  
                     EventWaitHandleRead.Set();
                 }
             }
@@ -71,10 +74,11 @@ namespace GZipTest.Implementations
                     }
                     else
                     {
-                        EventWaitHandleArray[(int)indexThread].Set();
+                        EventWaitHandleArray[(int)indexThread].Set();                      
                         return;
                     }                       
                 }
+                EventWaitHandleArray[(int)indexThread].Set();
             }
             catch (Exception e)
             {
@@ -105,12 +109,13 @@ namespace GZipTest.Implementations
                             outputStream.Write(block.Bytes, 0, block.Bytes.Length);                        
                         }
                         else
-                        {
+                        {                            
                             EventWaitHandleWrite.Set();
                             return;
                         }                            
                     }
                 }
+                EventWaitHandleWrite.Set();
             }
             catch (Exception e)
             {

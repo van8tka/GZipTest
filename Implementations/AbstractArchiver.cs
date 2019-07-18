@@ -1,11 +1,11 @@
 ﻿using GZipTest.Interfaces;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 
 namespace GZipTest.Implementations
 {
-
     internal abstract class AbstractArchiver : IArchiver, IDisposable
     {
         //ctor
@@ -14,9 +14,18 @@ namespace GZipTest.Implementations
             InputFile = input;
             OutputFile = output;
             EventWaitHandleArray = new ManualResetEvent[_countProcessors()];
-            BlockReaded = new BlockingCollection<BlockData>();
-            BlockForWrite = new BlockingCollection<BlockData>();          
+            SetAvailableBlockBounds();
+            BlockReaded = new BlockingCollection<BlockData>(BlockBound);
+            BlockForWrite = new BlockingCollection<BlockData>(BlockBound);
+           
             IsError = false;
+        }
+
+        private void SetAvailableBlockBounds()
+        {
+            var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+            int mbSize = 1024 * 1024;
+            BlockBound = (int)(ramCounter.NextValue() * mbSize / BlockSize) / 4;
         }
 
         private bool _disposedValue = false;
@@ -31,8 +40,7 @@ namespace GZipTest.Implementations
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
 
-
-
+        protected int BlockBound;
 
         protected BlockingCollection<BlockData> BlockReaded { get; set; }
         protected BlockingCollection<BlockData> BlockForWrite { get; set; }
@@ -99,20 +107,27 @@ namespace GZipTest.Implementations
        
         protected void SetPriorityData(BlockData block)
         {
-            lock (_lock)
+            try
             {
-                while (_lastAddedBlock != block.Number - 1)
-                    Monitor.Wait(_lock, 10);
-                if (_lastAddedBlock == block.Number - 1)
+                lock (_lock)
                 {
-                    BlockForWrite.TryAdd(block);
-                    _lastAddedBlock = block.Number;                  
+                    while (_lastAddedBlock != block.Number - 1)
+                        Monitor.Wait(_lock, 10);
+                    if (_lastAddedBlock == block.Number - 1)
+                    {
+                        while (BlockForWrite.Count == BlockForWrite.BoundedCapacity)
+                            Monitor.Wait(_lock, 10);
+                        BlockForWrite.Add(block);
+                            _lastAddedBlock = block.Number;
+                    }
                 }
             }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }           
         }
-
-
-       
 
         protected virtual void Dispose(bool disposing)
         {
@@ -134,7 +149,7 @@ namespace GZipTest.Implementations
         public void Dispose()
         {         
             Dispose(true);           
-        }            
+        }
     }
 
 

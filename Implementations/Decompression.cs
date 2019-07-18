@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-
+using System.Threading;
 
 namespace GZipTest.Implementations
 {
@@ -34,8 +34,12 @@ namespace GZipTest.Implementations
                         var bytes = new byte[lenghtBlock];
                         headerGzip.CopyTo(bytes, 0);
 
-                        input.Read(bytes, 8, lenghtBlock - 8);                      
-                        BlockReaded.TryAdd(new BlockData(id, bytes));
+                        input.Read(bytes, 8, lenghtBlock - 8);
+
+                        while (BlockReaded.Count == BlockReaded.BoundedCapacity)
+                            Thread.Sleep(10);
+
+                        BlockReaded.Add(new BlockData(id, bytes));
                         id++;
                         OutputProgress(input.Position, input.Length, "decompression");
                     }
@@ -56,7 +60,6 @@ namespace GZipTest.Implementations
         {
             try
             {
-
                 while (true && !IsError)
                 {
                     BlockData block;
@@ -72,8 +75,7 @@ namespace GZipTest.Implementations
                                 byte[] data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
                                 SetPriorityData(new BlockData(block.Number, data));
-                            }
-                           
+                            }                           
                         }
                     }
                     else
@@ -82,6 +84,7 @@ namespace GZipTest.Implementations
                         return;
                     }                      
                 }
+                EventWaitHandleArray[(int)indexThread].Set();
             }
             catch (Exception e)
             {
@@ -113,6 +116,7 @@ namespace GZipTest.Implementations
                         return;
                     }                       
                 }
+                EventWaitHandleWrite.Set();
             }
             catch (Exception e)
             {
