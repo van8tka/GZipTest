@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace GZipTest_1
+namespace GZipTest
 {
     internal class ArgumentsValidator
     {
@@ -29,9 +29,9 @@ namespace GZipTest_1
                     return false;
                 }
                     
-            }
-            Console.ReadLine();
+            }          
             Console.WriteLine("Ошибка входных параметров.");
+            Console.ReadLine();
             return false;
         }
 

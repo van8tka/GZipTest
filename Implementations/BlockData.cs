@@ -1,4 +1,4 @@
-﻿namespace GZipTest_1.Implementations
+﻿namespace GZipTest.Implementations
 {
 
     internal struct BlockData

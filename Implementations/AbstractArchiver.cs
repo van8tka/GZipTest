@@ -1,9 +1,9 @@
-﻿using GZipTest_1.Interfaces;
+﻿using GZipTest.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace GZipTest_1.Implementations
+namespace GZipTest.Implementations
 {
 
     internal abstract class AbstractArchiver : IArchiver, IDisposable

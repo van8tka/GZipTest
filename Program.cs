@@ -1,12 +1,14 @@
-﻿using GZipTest_1.Implementations;
+﻿using GZipTest.Implementations;
 using System;
 
-namespace GZipTest_1
+namespace GZipTest
 {
     class Program
     {    
         static int Main(string[] args)
         {
+            Console.WriteLine("Set params: GZipTest.exe [compress\\decompress] [Path to input file] [Path to output file]");
+            Console.WriteLine("For example: GZipTest.exe compress D:\\input.txt D:\\output.gz");
             int result = 1;
             if (ArgumentsValidator.Validate(args))
             {

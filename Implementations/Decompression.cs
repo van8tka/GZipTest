@@ -1,10 +1,10 @@
-﻿using GZipTest_1.Interfaces;
+﻿using GZipTest.Interfaces;
 using System;
 using System.IO;
 using System.IO.Compression;
 
 
-namespace GZipTest_1.Implementations
+namespace GZipTest.Implementations
 {
     internal class Decompression : AbstractArchiver, IDecompression
     {

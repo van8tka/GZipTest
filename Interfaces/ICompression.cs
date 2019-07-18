@@ -1,4 +1,4 @@
-﻿namespace GZipTest_1.Interfaces
+﻿namespace GZipTest.Interfaces
 {
     internal interface ICompression
     {

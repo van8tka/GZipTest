@@ -1,4 +1,4 @@
-﻿namespace GZipTest_1
+﻿namespace GZipTest
 {
     internal class Constants
     {
