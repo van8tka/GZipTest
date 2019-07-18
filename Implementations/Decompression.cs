@@ -34,8 +34,7 @@ namespace GZipTest_1.Implementations
                         var bytes = new byte[lenghtBlock];
                         headerGzip.CopyTo(bytes, 0);
 
-                        input.Read(bytes, 8, lenghtBlock - 8);
-                        CountReadBlocks();
+                        input.Read(bytes, 8, lenghtBlock - 8);                      
                         BlockReaded.TryAdd(new BlockData(id, bytes));
                         id++;
                         OutputProgress(input.Position, input.Length, "decompression");
@@ -105,8 +104,7 @@ namespace GZipTest_1.Implementations
                     {
                         using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                         {
-                            outputStream.Write(block.Bytes, 0, block.Bytes.Length);
-                            CountWriteBlocks();
+                            outputStream.Write(block.Bytes, 0, block.Bytes.Length);                           
                         }
                     }
                     else

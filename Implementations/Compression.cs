@@ -1,6 +1,5 @@
 ﻿using GZipTest_1.Interfaces;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
  
@@ -35,8 +34,7 @@ namespace GZipTest_1.Implementations
                         else
                             readCount = BlockSize;
                         var bytes = new byte[readCount];
-                        input.Read(bytes, 0, readCount);
-                        CountReadBlocks();
+                        input.Read(bytes, 0, readCount);                     
                         BlockReaded.TryAdd(new BlockData(id, bytes));
                         id++;
                         OutputProgress(input.Position, input.Length, "compression");
@@ -69,15 +67,13 @@ namespace GZipTest_1.Implementations
                                 gzipStream.Write(block.Bytes, 0, block.Bytes.Length);
                             }                         
                             SetPriorityData(new BlockData(block.Number, memStream.ToArray()));
-                        }
-                        
+                        }                       
                     }
                     else
                     {
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
-                    }
-                        
+                    }                       
                 }
             }
             catch (Exception e)
@@ -106,8 +102,7 @@ namespace GZipTest_1.Implementations
                             /*запишем информацию о размере блока для последующей декомперссии и записи, вместо
                              времени модификации файла в формате  MTIME  (согласно спецификации gzip) */
                             lenghtOfBlock.CopyTo(block.Bytes, 4);
-                            outputStream.Write(block.Bytes, 0, block.Bytes.Length);
-                            CountWriteBlocks();
+                            outputStream.Write(block.Bytes, 0, block.Bytes.Length);                        
                         }
                         else
                         {

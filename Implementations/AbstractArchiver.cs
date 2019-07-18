@@ -1,7 +1,6 @@
 ﻿using GZipTest_1.Interfaces;
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Threading;
 
 namespace GZipTest_1.Implementations
@@ -16,13 +15,14 @@ namespace GZipTest_1.Implementations
             OutputFile = output;
             EventWaitHandleArray = new ManualResetEvent[_countProcessors()];
             BlockReaded = new BlockingCollection<BlockData>();
-            BlockForWrite = new BlockingCollection<BlockData>();
-            Success = false;
+            BlockForWrite = new BlockingCollection<BlockData>();          
             IsError = false;
         }
-        //fix me: upperBoundCollection
-        // private int _upperBoundCollection = 10000;
-        protected bool Success;
+
+        private bool _disposedValue = false;
+        private object _lock = new object();
+        private int _lastAddedBlock = -1;
+      
         protected bool IsError;
         protected readonly string InputFile;
         protected readonly string OutputFile;
@@ -45,7 +45,7 @@ namespace GZipTest_1.Implementations
             int currentPersent = (int)(position * persent / length);
             Console.Write($"\r progress: {currentPersent} %");
             if (currentPersent == persent)
-                Console.WriteLine($"\n Wait for the end of {work}..");               
+                Console.WriteLine($"\n Please, wait for the end of {work}..");               
         }
 
         protected bool Start(Action<object> action)
@@ -66,18 +66,14 @@ namespace GZipTest_1.Implementations
                 EventWaitHandleWrite = new ManualResetEvent(false);
                 var threadWrite = new Thread(WriteData);
                 threadWrite.Start();
-
                 WaitFinish();
-                
-                Success = true;
+                return !IsError;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                Debugger.Break();
-                Success = false;
-            }
-            return Success;
+                Console.WriteLine(e);               
+                return false;               
+            }            
         }
 
         private void WaitFinish()
@@ -97,62 +93,27 @@ namespace GZipTest_1.Implementations
                 return new Decompression(input, output);
         }
 
-
-        object _lock = new object();
-        int lastAddedBlock = -1;
+       
         protected void SetPriorityData(BlockData block)
         {
             lock (_lock)
             {
-                while (lastAddedBlock != block.Number - 1)
+                while (_lastAddedBlock != block.Number - 1)
                     Monitor.Wait(_lock, 10);
-                if (lastAddedBlock == block.Number - 1)
+                if (_lastAddedBlock == block.Number - 1)
                 {
                     BlockForWrite.TryAdd(block);
-                    lastAddedBlock = block.Number;
-                    CountZipBlocks();
+                    _lastAddedBlock = block.Number;                  
                 }
             }
         }
 
 
-
-
-
-        //todo: remove this region
-        #region COUNT BLOCKS
-        private int CR = 0;
-        private int CW = 0;
-        private int CC = 0;
-        object _lock1 = new object();
-        object _lock2 = new object();
-        object _lock3 = new object();
-
-        protected void CountReadBlocks()
-        {
-            lock (_lock1)
-                CR++;
-           // Console.Write($"\r                      Read blocks {CR}");
-        }
-        protected void CountWriteBlocks()
-        {
-            lock (_lock2)
-                CW++;
-           // Console.Write($"\r                                                        Write blocks {CW}");
-        }
-        protected void CountZipBlocks()
-        {
-            lock (_lock3)
-                CC++;
-            // Console.Write($"\r                                                                                        Zip blocks {CC}");
-        }
-        #endregion
-
-        private bool disposedValue = false;
+       
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -160,15 +121,13 @@ namespace GZipTest_1.Implementations
                         i.Close();
                     EventWaitHandleRead.Close();
                     EventWaitHandleWrite.Close();
-                }
-                BlockReaded = null;
-                BlockForWrite = null;
-                disposedValue = true;
+                    BlockReaded.Dispose();
+                    BlockForWrite.Dispose();
+                }              
+                _disposedValue = true;
             }
         }
-
-
-        // This code added to correctly implement the disposable pattern.
+      
         public void Dispose()
         {         
             Dispose(true);           
