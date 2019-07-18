@@ -15,19 +15,19 @@ namespace GZipTest_1.Implementations
             InputFile = input;
             OutputFile = output;
             ManualResetEventArray = new ManualResetEvent[_countProcessors()];
-            BlockReaded = new BlockingCollection<byte[]>(_upperBoundCollection);
-            BlockForWrite = new BlockingCollection<byte[]>(_upperBoundCollection);
+            BlockReaded = new BlockingCollection<BlockData>(_upperBoundCollection);
+            BlockForWrite = new BlockingCollection<BlockData>(_upperBoundCollection);
             Success = false;
         }
-
+        //fix me: upperBoundCollection
         private int _upperBoundCollection = 10000;
         protected bool Success;
         protected readonly string InputFile;
         protected readonly string OutputFile;
         protected int BlockSize = 1024 * 1024;
         protected ManualResetEvent[] ManualResetEventArray;
-        protected BlockingCollection<byte[]> BlockReaded { get; set; }
-        protected BlockingCollection<byte[]> BlockForWrite { get; set; }
+        protected BlockingCollection<BlockData> BlockReaded { get; set; }
+        protected BlockingCollection<BlockData> BlockForWrite { get; set; }
 
         private int _countProcessors() => Environment.ProcessorCount;
         public abstract bool Start();
@@ -53,7 +53,7 @@ namespace GZipTest_1.Implementations
             {
                 var threadRead = new Thread(ReadData);
                 threadRead.Start();
-
+ 
                 var threads = new Thread[_countProcessors()];
                 for (int i = 0; i < threads.Length; i++)
                 {
@@ -86,6 +86,28 @@ namespace GZipTest_1.Implementations
         }
 
 
+        object _lock = new object();
+        int lastAddedBlock = -1;
+        protected void SetPriorityData(BlockData block)
+        {
+            lock (_lock)
+            {
+                while (lastAddedBlock != block.Number - 1)
+                    Monitor.Wait(_lock, 10);
+                if (lastAddedBlock == block.Number - 1)
+                {
+                    BlockForWrite.TryAdd(block);
+                    lastAddedBlock = block.Number;
+                    CountZipBlocks();
+                }
+            }
+        }
+
+
+
+
+
+
         private int CR = 0;
         private int CW = 0;
         private int CC = 0;
@@ -97,19 +119,21 @@ namespace GZipTest_1.Implementations
         {
             lock (_lock1)
                 CR++;
-            Console.Write($"\r                      Read blocks {CR}");
+           // Console.Write($"\r                      Read blocks {CR}");
         }
         protected void CountWriteBlocks()
         {
             lock (_lock2)
                 CW++;
-            Console.Write($"\r                                                        Write blocks {CW}");
+           // Console.Write($"\r                                                        Write blocks {CW}");
         }
         protected void CountZipBlocks()
         {
             lock (_lock3)
                 CC++;
-            Console.Write($"\r                                                                                        Zip blocks {CC}");
+             Console.Write($"\r                                                                                        Zip blocks {CC}");
         }
     }
+
+
 }

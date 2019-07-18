@@ -24,7 +24,7 @@ namespace GZipTest_1.Implementations
             {
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
                 {
-
+                    int id = 0;
                     while (input.Position < input.Length)
                     {
                         var headerGzip = new byte[8];
@@ -36,7 +36,8 @@ namespace GZipTest_1.Implementations
 
                         input.Read(bytes, 8, lenghtBlock - 8);
                         CountReadBlocks();
-                        BlockReaded.TryAdd(bytes);
+                        BlockReaded.TryAdd(new BlockData(id, bytes));
+                        id++;
                         OutputProgress(input.Position, input.Length, "decompression");
                     }
                 }
@@ -57,20 +58,19 @@ namespace GZipTest_1.Implementations
 
                 while (true)
                 {
-                    byte[] bytes;
-                    if (BlockReaded.TryTake(out bytes, 1000))
+                    BlockData block;
+                    if (BlockReaded.TryTake(out block, 1000))
                     {
-                        using (var memStream = new MemoryStream(bytes))
+                        using (var memStream = new MemoryStream(block.Bytes))
                         {
                             using (var gzipStream = new GZipStream(memStream, CompressionMode.Decompress))
                             {
-                                byte[] hederBytes = new byte[4] { bytes[4], bytes[5], bytes[6], bytes[7] };
+                                byte[] hederBytes = new byte[4] { block.Bytes[4], block.Bytes[5], block.Bytes[6], block.Bytes[7] };
                                 int lenghtBlock = BitConverter.ToInt32(hederBytes, 0);
-                                int dataLenght = BitConverter.ToInt32(bytes, lenghtBlock - 4);
+                                int dataLenght = BitConverter.ToInt32(block.Bytes, lenghtBlock - 4);
                                 byte[] data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
-                                CountZipBlocks();
-                                BlockForWrite.TryAdd(data);
+                                SetPriorityData(new BlockData(block.Number, data));
                             }
                             ManualResetEventArray[(int)indexThread].Set();
                         }
@@ -94,12 +94,12 @@ namespace GZipTest_1.Implementations
             {
                 while (true)
                 {
-                    byte[] bytes;
-                    if (BlockForWrite.TryTake(out bytes, 1000))
+                    BlockData block;
+                    if (BlockForWrite.TryTake(out block, 1000))
                     {
                         using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                         {
-                            outputStream.Write(bytes, 0, bytes.Length);
+                            outputStream.Write(block.Bytes, 0, block.Bytes.Length);
                             CountWriteBlocks();
                         }
                     }

@@ -23,6 +23,7 @@ namespace GZipTest_1.Implementations
         {
             try
             {
+                int id = 0;
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
                 {
                     var lenght = input.Length;
@@ -36,7 +37,8 @@ namespace GZipTest_1.Implementations
                         var bytes = new byte[readCount];
                         input.Read(bytes, 0, readCount);
                         CountReadBlocks();
-                        BlockReaded.TryAdd(bytes);
+                        BlockReaded.TryAdd(new BlockData(id, bytes));
+                        id++;
                         OutputProgress(input.Position, input.Length, "compression");
                     }
                 }
@@ -55,17 +57,16 @@ namespace GZipTest_1.Implementations
             {
                 while (true)
                 {
-                    byte[] bytes;
-                    if (BlockReaded.TryTake(out bytes, 1000))
+                    BlockData block;
+                    if (BlockReaded.TryTake(out block, 1000))
                     {
                         using (var memStream = new MemoryStream())
                         {
                             using (var gzipStream = new GZipStream(memStream, CompressionMode.Compress))
                             {
-                                gzipStream.Write(bytes, 0, bytes.Length);
-                            }
-                            CountZipBlocks();
-                            BlockForWrite.TryAdd(memStream.ToArray());
+                                gzipStream.Write(block.Bytes, 0, block.Bytes.Length);
+                            }                         
+                            SetPriorityData(new BlockData(block.Number, memStream.ToArray()));
                         }
                         ManualResetEventArray[(int)indexThread].Set();
                     }
@@ -80,35 +81,30 @@ namespace GZipTest_1.Implementations
             }
         }
 
-        //private void AddedExtenstion(Stream stream, string inputFile)
-        //{
-        //     string extenstion = Path.GetExtension(inputFile);
-        //     var bytes = Encoding.Default.GetBytes(extenstion);
-        //     stream.Write(bytes, 0, bytes.Length);
-        //}
-
+       
         public override void WriteData()
         {
             try
             {
                 while (true)
                 {
-                    byte[] bytes;
-                    if (BlockForWrite.TryTake(out bytes, 1000))
+                    using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                     {
-                        using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
-                        {
+
+                        BlockData block;
+                        if (BlockForWrite.TryTake(out block, 1000))
+                        {                           
                             //получим размер сжатых данных для последующей декомпрессии
-                            var lenghtOfBlock = BitConverter.GetBytes(bytes.Length);
-                            //запись информации о длине блока для считывания вместо
-                            //времени модификации файла в формате Unix (спецификация gzip)
-                            lenghtOfBlock.CopyTo(bytes, 4);
-                            outputStream.Write(bytes, 0, bytes.Length);
+                            var lenghtOfBlock = BitConverter.GetBytes(block.Bytes.Length);
+                            /*запишем информацию о размере блока для последующей декомперссии и записи, вместо
+                             времени модификации файла в формате  MTIME  (согласно спецификации gzip) */
+                            lenghtOfBlock.CopyTo(block.Bytes, 4);
+                            outputStream.Write(block.Bytes, 0, block.Bytes.Length);
                             CountWriteBlocks();
                         }
+                        else
+                            return;
                     }
-                    else
-                        return;
                 }
             }
             catch (Exception e)
