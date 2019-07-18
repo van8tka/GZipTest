@@ -27,7 +27,7 @@ namespace GZipTest_1.Implementations
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
                 {
                     var lenght = input.Length;
-                    while (input.Position < lenght)
+                    while (input.Position < lenght && !IsError)
                     {
                         int readCount;
                         if (lenght - input.Position < BlockSize)
@@ -41,12 +41,14 @@ namespace GZipTest_1.Implementations
                         id++;
                         OutputProgress(input.Position, input.Length, "compression");
                     }
+                    EventWaitHandleRead.Set();
                 }
             }
             catch (Exception e)
             {
+                EventWaitHandleRead.Set();
                 Console.WriteLine(e);
-                Debugger.Break();
+                IsError = true;
             }
         }
 
@@ -55,7 +57,7 @@ namespace GZipTest_1.Implementations
         {
             try
             {
-                while (true)
+                while (true && !IsError)
                 {
                     BlockData block;
                     if (BlockReaded.TryTake(out block, 1000))
@@ -68,16 +70,21 @@ namespace GZipTest_1.Implementations
                             }                         
                             SetPriorityData(new BlockData(block.Number, memStream.ToArray()));
                         }
-                        ManualResetEventArray[(int)indexThread].Set();
+                        
                     }
                     else
+                    {
+                        EventWaitHandleArray[(int)indexThread].Set();
                         return;
+                    }
+                        
                 }
             }
             catch (Exception e)
             {
+                EventWaitHandleArray[(int)indexThread].Set();
                 Console.WriteLine(e);
-                Debugger.Break();
+                IsError = true; 
             }
         }
 
@@ -86,7 +93,7 @@ namespace GZipTest_1.Implementations
         {
             try
             {
-                while (true)
+                while (true && ! IsError)
                 {
                     using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                     {
@@ -103,14 +110,18 @@ namespace GZipTest_1.Implementations
                             CountWriteBlocks();
                         }
                         else
+                        {
+                            EventWaitHandleWrite.Set();
                             return;
+                        }                            
                     }
                 }
             }
             catch (Exception e)
             {
+                EventWaitHandleWrite.Set();
                 Console.WriteLine(e);
-                Debugger.Break();
+                IsError = true;
             }
         }
     }
