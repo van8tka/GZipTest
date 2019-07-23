@@ -1,7 +1,7 @@
 ﻿using GZipTest.Interfaces;
+using GZipTest.Models;
 using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
+using System.IO;
 using System.Threading;
 
 namespace GZipTest.Implementations
@@ -14,28 +14,27 @@ namespace GZipTest.Implementations
             InputFile = input;
             OutputFile = output;
             EventWaitHandleArray = new ManualResetEvent[CountProcessors()];
-          //  SetAvailableBlockBounds();
-            BlockReaded = new CustomBlockingCollection( );
-            BlockProcessed = new CustomBlockingCollection( );
-           
+            BlockReaded = new CustomBlockingCollection();
+            BlockProcessed = new CustomBlockingCollection();
             IsError = false;
+            BlocksCount = GetBlockCount(BlockSize);
         }
 
-       
+        private int GetBlockCount(int blockSize)
+        {
+            var file = new FileInfo(InputFile);
+            return (int)(file.Length / blockSize);
+        }
 
         private bool _disposedValue = false;
-        private object _lock = new object();
-        private int _lastAddedBlock = -1;
-      
         protected bool IsError;
         protected readonly string InputFile;
         protected readonly string OutputFile;
+        protected int BlocksCount;
         protected int BlockSize = 1024 * 1024;
         protected EventWaitHandle[] EventWaitHandleArray;
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
-
-      //  protected int BlockBound;
 
         protected CustomBlockingCollection BlockReaded { get; set; }
         protected CustomBlockingCollection BlockProcessed { get; set; }
@@ -44,24 +43,15 @@ namespace GZipTest.Implementations
 
         public abstract bool Start();
 
-
-        //private void SetAvailableBlockBounds()
-        //{
-        //    var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
-        //    int mbSize = 1024 * 1024;
-        //    BlockBound = (int)(ramCounter.NextValue() * mbSize / BlockSize) / 4;
-        //}
-
-        protected void OutputProgress(long position, long length, string work)
+ 
+        protected void WaitFinish()
         {
-            int persent = 100;
-            int currentPersent = (int)(position * persent / length);
-            Console.Write($"\r progress: {currentPersent} %");
-            if (currentPersent == persent)
-                Console.WriteLine($"\n Please, wait for the end of {work}..");               
+            var handle = new WaitHandle[EventWaitHandleArray.Length + 2];
+            EventWaitHandleArray.CopyTo(handle, 2);
+            handle[0] = EventWaitHandleRead;
+            handle[1] = EventWaitHandleWrite;
+            WaitHandle.WaitAll(handle);
         }
-
-           
 
         public static AbstractArchiver CreateArchiver(string action, string input, string output)
         {
@@ -71,30 +61,6 @@ namespace GZipTest.Implementations
                 return new Decompression(input, output);
         }
 
-       
-        //protected void SetPriorityData(BlockData block)
-        //{
-        //    try
-        //    {
-        //        lock (_lock)
-        //        {
-        //            while (_lastAddedBlock != block.Number - 1)
-        //                Monitor.Wait(_lock, 10);
-        //            if (_lastAddedBlock == block.Number - 1)
-        //            {
-        //                while (BlockProcessed.Count == BlockProcessed.BoundedCapacity)
-        //                    Monitor.Wait(_lock, 10);
-        //                BlockProcessed.Add(block);
-        //                    _lastAddedBlock = block.Number;
-        //            }
-        //        }
-        //    }
-        //    catch(Exception e)
-        //    {
-        //        Console.WriteLine(e);
-        //        throw;
-        //    }           
-        //}
 
         protected virtual void Dispose(bool disposing)
         {
@@ -106,18 +72,15 @@ namespace GZipTest.Implementations
                         handle.Close();
                     EventWaitHandleRead.Close();
                     EventWaitHandleWrite.Close();
-                    //BlockReaded.Dispose();
-                    //BlockProcessed.Dispose();
-                }              
+                }
                 _disposedValue = true;
             }
         }
-      
+
         public void Dispose()
-        {         
-            Dispose(true);           
+        {
+            Dispose(true);
         }
+
     }
-
-
 }

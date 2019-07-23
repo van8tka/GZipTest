@@ -58,11 +58,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArgumentsValidator.cs" />
-    <Compile Include="Constants.cs" />
-    <Compile Include="Implementations\BlockData.cs" />
+    <Compile Include="Helpers\ArgumentsValidator.cs" />
+    <Compile Include="Helpers\Constants.cs" />
+    <Compile Include="Helpers\ProgressInfo.cs" />
+    <Compile Include="Models\BlockData.cs" />
     <Compile Include="Implementations\Compression.cs" />
-    <Compile Include="Implementations\CustomBlockingCollection.cs" />
+    <Compile Include="Models\CustomBlockingCollection.cs" />
     <Compile Include="Implementations\Decompression.cs" />
     <Compile Include="Interfaces\IArchiver.cs" />
     <Compile Include="Program.cs" />

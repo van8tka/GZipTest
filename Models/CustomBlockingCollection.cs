@@ -1,41 +1,43 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 
-namespace GZipTest.Implementations
+namespace GZipTest.Models
+
 {
     internal class CustomBlockingCollection
     {
         private Queue<BlockData> _queue;
         private object _lock = new object();
         private int _number = 0;
-        private bool _isFinish = false;
-    
+        public bool IsFinish { get; private set; }  
+
         internal CustomBlockingCollection()
         {
             _queue = new Queue<BlockData>();
+            IsFinish = false;
         }
 
 
         internal void AddRawBlock(BlockData block)
         {
-            if (!_isFinish)
-            {
+             if (!IsFinish)
+             {
                 lock (_lock)
                 {
                     _queue.Enqueue(block);
                     _number++;
                     Monitor.PulseAll(_lock);
                 }
-            }
+             }
         }
 
         internal void AddProccessedBlock(BlockData block)
         {
-            if (!_isFinish)
+            int id = block.Number;
+            lock (_lock)
             {
-                int id = block.Number;
-                lock (_lock)
-                {
+                if (!IsFinish)
+                 {
                     while (id != _number)
                     {
                         Monitor.Wait(_lock);
@@ -47,23 +49,30 @@ namespace GZipTest.Implementations
             }
         }
 
-        internal BlockData TakeBlock()
+        internal bool TryTakeBlock(out BlockData block)
         {
-            lock(_lock)
+            lock (_lock)
             {
-                while (_queue.Count == 0 && !_isFinish)
+                while (_queue.Count == 0 && !IsFinish)              
                     Monitor.Wait(_lock);
-                return _queue.Dequeue();
+                if (_queue.Count == 0)
+                {
+                    block = default;
+                    return false;
+                }
+                else
+                {
+                    block = _queue.Dequeue();
+                    return true;
+                }
             }
         }
-
-
 
         public void Finish()
         {
             lock (_lock)
             {
-                _isFinish = true;
+                IsFinish = true;
                 Monitor.PulseAll(_lock);
             }
         }
