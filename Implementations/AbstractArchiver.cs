@@ -13,20 +13,15 @@ namespace GZipTest.Implementations
         {
             InputFile = input;
             OutputFile = output;
-            EventWaitHandleArray = new ManualResetEvent[_countProcessors()];
-            SetAvailableBlockBounds();
-            BlockReaded = new BlockingCollection<BlockData>(BlockBound);
-            BlockForWrite = new BlockingCollection<BlockData>(BlockBound);
+            EventWaitHandleArray = new ManualResetEvent[CountProcessors()];
+          //  SetAvailableBlockBounds();
+            BlockReaded = new CustomBlockingCollection( );
+            BlockProcessed = new CustomBlockingCollection( );
            
             IsError = false;
         }
 
-        private void SetAvailableBlockBounds()
-        {
-            var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
-            int mbSize = 1024 * 1024;
-            BlockBound = (int)(ramCounter.NextValue() * mbSize / BlockSize) / 4;
-        }
+       
 
         private bool _disposedValue = false;
         private object _lock = new object();
@@ -40,15 +35,22 @@ namespace GZipTest.Implementations
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
 
-        protected int BlockBound;
+      //  protected int BlockBound;
 
-        protected BlockingCollection<BlockData> BlockReaded { get; set; }
-        protected BlockingCollection<BlockData> BlockForWrite { get; set; }
+        protected CustomBlockingCollection BlockReaded { get; set; }
+        protected CustomBlockingCollection BlockProcessed { get; set; }
 
-        private int _countProcessors() => Environment.ProcessorCount;
+        protected int CountProcessors() => Environment.ProcessorCount;
+
         public abstract bool Start();
-        public abstract void ReadData();
-        public abstract void WriteData();
+
+
+        //private void SetAvailableBlockBounds()
+        //{
+        //    var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+        //    int mbSize = 1024 * 1024;
+        //    BlockBound = (int)(ramCounter.NextValue() * mbSize / BlockSize) / 4;
+        //}
 
         protected void OutputProgress(long position, long length, string work)
         {
@@ -59,42 +61,7 @@ namespace GZipTest.Implementations
                 Console.WriteLine($"\n Please, wait for the end of {work}..");               
         }
 
-        protected bool Start(Action<object> action)
-        {
-            try
-            {
-                EventWaitHandleRead = new ManualResetEvent(false);
-                var threadRead = new Thread(ReadData);
-                threadRead.Start();
- 
-                var threads = new Thread[_countProcessors()];
-                for (int i = 0; i < threads.Length; i++)
-                {
-                    EventWaitHandleArray[i] = new ManualResetEvent(false);
-                    threads[i] = new Thread(new ParameterizedThreadStart(action));
-                    threads[i].Start(i);
-                }
-                EventWaitHandleWrite = new ManualResetEvent(false);
-                var threadWrite = new Thread(WriteData);
-                threadWrite.Start();
-                WaitFinish();
-                return !IsError;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);               
-                return false;               
-            }            
-        }
-
-        private void WaitFinish()
-        {
-            var handle = new WaitHandle[EventWaitHandleArray.Length + 2];
-            EventWaitHandleArray.CopyTo(handle, 2);
-            handle[0] = EventWaitHandleRead;
-            handle[1] = EventWaitHandleWrite;
-            WaitHandle.WaitAll(handle);
-        }
+           
 
         public static AbstractArchiver CreateArchiver(string action, string input, string output)
         {
@@ -105,29 +72,29 @@ namespace GZipTest.Implementations
         }
 
        
-        protected void SetPriorityData(BlockData block)
-        {
-            try
-            {
-                lock (_lock)
-                {
-                    while (_lastAddedBlock != block.Number - 1)
-                        Monitor.Wait(_lock, 10);
-                    if (_lastAddedBlock == block.Number - 1)
-                    {
-                        while (BlockForWrite.Count == BlockForWrite.BoundedCapacity)
-                            Monitor.Wait(_lock, 10);
-                        BlockForWrite.Add(block);
-                            _lastAddedBlock = block.Number;
-                    }
-                }
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }           
-        }
+        //protected void SetPriorityData(BlockData block)
+        //{
+        //    try
+        //    {
+        //        lock (_lock)
+        //        {
+        //            while (_lastAddedBlock != block.Number - 1)
+        //                Monitor.Wait(_lock, 10);
+        //            if (_lastAddedBlock == block.Number - 1)
+        //            {
+        //                while (BlockProcessed.Count == BlockProcessed.BoundedCapacity)
+        //                    Monitor.Wait(_lock, 10);
+        //                BlockProcessed.Add(block);
+        //                    _lastAddedBlock = block.Number;
+        //            }
+        //        }
+        //    }
+        //    catch(Exception e)
+        //    {
+        //        Console.WriteLine(e);
+        //        throw;
+        //    }           
+        //}
 
         protected virtual void Dispose(bool disposing)
         {
@@ -139,8 +106,8 @@ namespace GZipTest.Implementations
                         handle.Close();
                     EventWaitHandleRead.Close();
                     EventWaitHandleWrite.Close();
-                    BlockReaded.Dispose();
-                    BlockForWrite.Dispose();
+                    //BlockReaded.Dispose();
+                    //BlockProcessed.Dispose();
                 }              
                 _disposedValue = true;
             }

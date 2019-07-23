@@ -1,23 +1,56 @@
-﻿using GZipTest.Interfaces;
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
 
 namespace GZipTest.Implementations
 {
-    internal class Decompression : AbstractArchiver, IDecompression
+    internal class Decompression : AbstractArchiver
     {
         internal Decompression(string input, string output) : base(input, output) { }
 
         public override bool Start()
         {
-            Console.WriteLine(" Started decompressing..");
-            return Start(DecompressData);
+            try
+            {
+                Console.WriteLine(" Started decompressing..");
+                EventWaitHandleRead = new ManualResetEvent(false);
+                var threadRead = new Thread(ReadData);
+                threadRead.Start();
+
+                var threads = new Thread[CountProcessors()];
+                for (int i = 0; i < threads.Length; i++)
+                {
+                    EventWaitHandleArray[i] = new ManualResetEvent(false);
+                    threads[i] = new Thread(new ParameterizedThreadStart(DecompressData));
+                    threads[i].Start(i);
+                }
+                EventWaitHandleWrite = new ManualResetEvent(false);
+                var threadWrite = new Thread(WriteData);
+                threadWrite.Start();
+                WaitFinish();
+                return !IsError;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
         }
 
 
-        public override void ReadData()
+        private void WaitFinish()
+        {
+            var handle = new WaitHandle[EventWaitHandleArray.Length + 2];
+            EventWaitHandleArray.CopyTo(handle, 2);
+            handle[0] = EventWaitHandleRead;
+            handle[1] = EventWaitHandleWrite;
+            WaitHandle.WaitAll(handle);
+        }
+
+
+
+        private void ReadData()
         {
             try
             {
@@ -26,7 +59,7 @@ namespace GZipTest.Implementations
                     int id = 0;
                     while (input.Position < input.Length && !IsError)
                     {
-                        //читаем заголовок запакаованного блока и получаем размер полезной нагрузки указанной при записи
+                        //читаем заголовок запакованного блока и получаем размер полезной нагрузки указанной при записи
                         var headerGzip = new byte[8];
                         input.Read(headerGzip, 0, headerGzip.Length);
                         int lenghtBlock = BitConverter.ToInt32(headerGzip, 4);
@@ -56,7 +89,7 @@ namespace GZipTest.Implementations
 
 
 
-        public void DecompressData(object indexThread)
+        private void DecompressData(object indexThread)
         {
             try
             {
@@ -96,14 +129,14 @@ namespace GZipTest.Implementations
 
 
 
-        public override void WriteData()
+        private void WriteData()
         {
             try
             {
                 while (true && !IsError)
                 {
                     BlockData block;
-                    if (BlockForWrite.TryTake(out block, 1000))
+                    if (BlockProcessed.TryTake(out block, 1000))
                     {
                         using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                         {
