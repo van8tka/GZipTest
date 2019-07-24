@@ -3,7 +3,7 @@
 namespace GZipTest.Helpers
 {
     //todo: MUST REMOVE CLASS before send prodaction
-    internal class CountBlocks
+    public class CountBlocks
     {
         bool _isShow;
         internal CountBlocks(bool isShow)

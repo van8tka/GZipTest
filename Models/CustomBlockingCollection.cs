@@ -4,7 +4,7 @@ using System.Threading;
 namespace GZipTest.Models
 
 {
-    internal class CustomBlockingCollection
+    public class CustomBlockingCollection
     {
         private Queue<BlockData> _queue;
         private object _lock = new object();   
