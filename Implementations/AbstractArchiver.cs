@@ -20,7 +20,7 @@ namespace GZipTest.Implementations
             IsError = false;
             BlocksCount = GetBlockCount(BlockSize);
             //todo: must remove this class
-            CountBlocks = new CountBlocks(false);
+            CountBlocks = new CountBlocks(true);
         }
         //todo: must remove this class
         protected CountBlocks CountBlocks { get;private set; }
@@ -37,7 +37,7 @@ namespace GZipTest.Implementations
         protected readonly string InputFile;
         protected readonly string OutputFile;
         protected int BlocksCount;
-        protected int BlocksProcessed = 0;
+        protected int BlocksProcessedCount = 0;
         protected int BlockSize = 1024 * 1024;
         protected EventWaitHandle[] EventWaitHandleArray;
         protected EventWaitHandle EventWaitHandleRead;

@@ -63,9 +63,9 @@ namespace GZipTest.Implementations
 
                         input.Read(bytes, 8, lenghtBlock - 8);
 
-                        //  BlockReaded.AddRawBlock(new BlockData(id, bytes));
                         BlockReaded.AddBlock(new BlockData(id, bytes));
-                        id++;                     
+                        id++;
+                        CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();
                     EventWaitHandleRead.Set();                   
@@ -99,13 +99,16 @@ namespace GZipTest.Implementations
                                 int dataLenght = BitConverter.ToInt32(block.Bytes, lenghtBlock - 4);
                                 byte[] data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
-                                // BlockProcessed.AddRawBlock(new BlockData(block.Number, data));
                                 BlockProcessed.AddBlock(new BlockData(block.Number, data));
+                                BlocksProcessedCount++;
+                                CountBlocks.CountBZ();
                             }                           
                         }
                     }
                     else
                     {
+                        if (BlockReaded.IsFinish && BlocksProcessedCount == BlocksCount)
+                            BlockProcessed.Finish();
                         EventWaitHandleArray[(int)indexThread].Set();                        
                         return;
                     }                      
@@ -137,11 +140,15 @@ namespace GZipTest.Implementations
                             outputStream.Write(block.Bytes, 0, block.Bytes.Length);
                             blocksWrite++;
                             ProgressInfo.Output(blocksWrite, BlocksCount);
+                            CountBlocks.CountBW();
                         }
                     }
                     else
                     {
-                        ProgressInfo.End();
+                        if (blocksWrite == BlocksCount)
+                            ProgressInfo.End();
+                        else
+                            throw new Exception("Can't write all blocks");
                         EventWaitHandleWrite.Set();
                         return;
                     }                       

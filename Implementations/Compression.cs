@@ -68,8 +68,7 @@ namespace GZipTest.Implementations
                         else
                             readCount = BlockSize;
                         var bytes = new byte[readCount];
-                        input.Read(bytes, 0, readCount);
-                        //BlockReaded.AddRawBlock(new BlockData(id, bytes));                       
+                        input.Read(bytes, 0, readCount);                                           
                         BlockReaded.AddBlock(new BlockData(id, bytes));
                         id++;
                         CountBlocks.CountBR();
@@ -106,16 +105,15 @@ namespace GZipTest.Implementations
                             {
                                 CheckMemory();
                                 gzipStream.Write(block.Bytes, 0, block.Bytes.Length);
-                            }
-                            //BlockProcessed.AddProccessedBlock(new BlockData(block.Number, memStream.ToArray()));
+                            }                            
                             BlockProcessed.AddBlock(new BlockData(block.Number, memStream.ToArray()));
-                            BlocksProcessed++;
+                            BlocksProcessedCount++;
                             CountBlocks.CountBZ();
                         }                       
                     }
                     else
                     {
-                        if (BlockReaded.IsFinish && BlocksProcessed == BlocksCount)
+                        if (BlockReaded.IsFinish && BlocksProcessedCount == BlocksCount)
                             BlockProcessed.Finish();
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
