@@ -44,7 +44,7 @@ namespace GZipTest.Implementations
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine(Environment.NewLine + e);
                 return false;
             }
         }
@@ -83,21 +83,20 @@ namespace GZipTest.Implementations
                 Debugger.Break();
             }
             catch (Exception e)
-            {               
-                Console.WriteLine(e);
+            {
+                Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
                 EventWaitHandleRead.Set();
             }
         }
 
-
+     
         private void CompressData(object indexThread)
         {
             try
-            {
+            {             
                 while (true && !IsError)
                 {
-                    
                     BlockData block;
                     if (BlockReaded.TryTakeBlock(out block))
                     {
@@ -110,18 +109,18 @@ namespace GZipTest.Implementations
                             }
                             //BlockProcessed.AddProccessedBlock(new BlockData(block.Number, memStream.ToArray()));
                             BlockProcessed.AddBlock(new BlockData(block.Number, memStream.ToArray()));
+                            BlocksProcessed++;
                             CountBlocks.CountBZ();
                         }                       
                     }
                     else
                     {
-                        if (BlockReaded.IsFinish)
+                        if (BlockReaded.IsFinish && BlocksProcessed == BlocksCount)
                             BlockProcessed.Finish();
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
                     }                       
-                }  
-               
+                }                
                 EventWaitHandleArray[(int)indexThread].Set();
             }
             catch (OutOfMemoryException e)
@@ -129,8 +128,8 @@ namespace GZipTest.Implementations
                 Debugger.Break();
             }
             catch (Exception e)
-            {               
-                Console.WriteLine(e);
+            {
+                Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
                 EventWaitHandleArray[(int)indexThread].Set();
             }
@@ -178,8 +177,8 @@ namespace GZipTest.Implementations
                 Debugger.Break();
             }
             catch (Exception e)
-            {               
-                Console.WriteLine(e);
+            {              
+                Console.WriteLine(Environment.NewLine+e);
                 IsError = true;
                 EventWaitHandleWrite.Set();
             }

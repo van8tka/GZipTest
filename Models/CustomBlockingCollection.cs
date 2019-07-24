@@ -8,7 +8,7 @@ namespace GZipTest.Models
     {
         private Queue<BlockData> _queue;
         private object _lock = new object();
-        byte _countCurrentThreads = 0;
+     //   byte _countCurrentThreads = 0;
 
         //      private int _number = 0;
         public bool IsFinish { get; private set; }
@@ -26,7 +26,7 @@ namespace GZipTest.Models
             bool _lockWasTaken = false;
             try
             {
-                _countCurrentThreads++;
+              //  _countCurrentThreads++;
                 Monitor.Enter(_lock, ref _lockWasTaken);               
                 if (!IsFinish)
                     _queue.Enqueue(block);             
@@ -34,8 +34,8 @@ namespace GZipTest.Models
             }
             finally
             {
-                _countCurrentThreads--;
-                ReleaseLock(_lockWasTaken);
+             //   _countCurrentThreads--;
+                 ReleaseLock(_lockWasTaken);
             }
         }
 
@@ -107,8 +107,8 @@ namespace GZipTest.Models
             try
             {
                 Monitor.Enter(_lock, ref _lockWasTaken);
-                while (_countCurrentThreads != 0)
-                    Monitor.Wait(_lock);              
+                //while (_countCurrentThreads != 0)
+                //    Monitor.Wait(_lock);              
                 IsFinish = true;
                 Monitor.PulseAll(_lock);
             }

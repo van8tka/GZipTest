@@ -37,7 +37,7 @@ namespace GZipTest.Implementations
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine(Environment.NewLine + e);
                 return false;
             }
         }
@@ -72,8 +72,8 @@ namespace GZipTest.Implementations
                 }
             }
             catch (Exception e)
-            {                
-                Console.WriteLine(e);
+            {
+                Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
                 EventWaitHandleRead.Set();
             }
@@ -113,8 +113,8 @@ namespace GZipTest.Implementations
                 EventWaitHandleArray[(int)indexThread].Set();
             }
             catch (Exception e)
-            {              
-                Console.WriteLine(e);
+            {
+                Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
                 EventWaitHandleArray[(int)indexThread].Set();
             }
@@ -149,8 +149,8 @@ namespace GZipTest.Implementations
                 EventWaitHandleWrite.Set();
             }
             catch (Exception e)
-            {               
-                Console.WriteLine(e);
+            {
+                Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
                 EventWaitHandleWrite.Set();
             }
