@@ -17,29 +17,18 @@ namespace GZipTest.Implementations
             EventWaitHandleArray = new ManualResetEvent[CountProcessors()];
             BlockReaded = new CustomBlockingCollection();
             BlockProcessed = new CustomBlockingCollection();
-            IsError = false;
-            BlocksCount = GetBlockCount(BlockSize);
+            IsError = false;           
             //todo: must remove this class
             CountBlocks = new CountBlocks(true);
         }
         //todo: must remove this class
         protected CountBlocks CountBlocks { get;private set; }
-
-
-        private int GetBlockCount(int blockSize)
-        {
-            if (string.IsNullOrEmpty(InputFile))
-                return 0;
-            var file = new FileInfo(InputFile);
-            return (int) Math.Ceiling( (double)file.Length / blockSize );
-        }
  
-
         private bool _disposedValue = false;
         protected bool IsError;
         protected readonly string InputFile;
         protected readonly string OutputFile;
-        protected int BlocksCount;
+        protected int BlocksCount { get; set; }
         protected int BlocksProcessedCount = 0;
         protected int BlockSize = 1024 * 1024;
         protected EventWaitHandle[] EventWaitHandleArray;
