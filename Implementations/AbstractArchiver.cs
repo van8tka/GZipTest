@@ -1,7 +1,7 @@
-﻿using GZipTest.Interfaces;
+﻿using GZipTest.Helpers;
+using GZipTest.Interfaces;
 using GZipTest.Models;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -19,12 +19,16 @@ namespace GZipTest.Implementations
             BlockProcessed = new CustomBlockingCollection();
             IsError = false;
             BlocksCount = GetBlockCount(BlockSize);
+            CountBlocks = new CountBlocks(false);
         }
+
+        protected CountBlocks CountBlocks { get;private set; }
+
 
         private int GetBlockCount(int blockSize)
         {
             var file = new FileInfo(InputFile);
-            return (int)(file.Length / blockSize);
+            return (int) Math.Ceiling( (double)file.Length / blockSize );
         }
 
         private bool _disposedValue = false;
@@ -84,11 +88,11 @@ namespace GZipTest.Implementations
  
         protected void CheckMemory()
         {
-            var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
-            int mbSize = 1024 * 1024;
-            int mbFree = (int)(ramCounter.NextValue() * mbSize);
-            Console.WriteLine($"\r                       free memory {mbFree} ");
+            //var ramCounter = new PerformanceCounter("Memory", "Available MBytes");           
+            //float mbFree = ramCounter.NextValue();
+            //Console.Write($"\r                         free memory {mbFree} ");
         }
-
+ 
+       
     }
 }

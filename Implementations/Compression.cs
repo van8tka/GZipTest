@@ -19,6 +19,7 @@ namespace GZipTest.Implementations
                 Console.WriteLine(" Started compressing..");
                 EventWaitHandleRead = new ManualResetEvent(false);
                 var threadRead = new Thread(ReadData);
+                threadRead.Name = "ReaderThread";
                 threadRead.Start();
 
                 var threads = new Thread[CountProcessors()];
@@ -26,10 +27,12 @@ namespace GZipTest.Implementations
                 {
                     EventWaitHandleArray[i] = new ManualResetEvent(false);
                     threads[i] = new Thread(new ParameterizedThreadStart(CompressData));
+                    threads[i].Name = $"ZipThred_{i}";
                     threads[i].Start(i);
                 }
                 EventWaitHandleWrite = new ManualResetEvent(false);
                 var threadWrite = new Thread(WriteData);
+                threadWrite.Name = "WriterThread";
                 threadWrite.Start();
                 WaitFinish();
                 return !IsError;
@@ -66,10 +69,10 @@ namespace GZipTest.Implementations
                             readCount = BlockSize;
                         var bytes = new byte[readCount];
                         input.Read(bytes, 0, readCount);
-                   
-                        BlockReaded.AddRawBlock(new BlockData(id, bytes));                       
-                        id++;                     
-                        //CountBR();
+                        //BlockReaded.AddRawBlock(new BlockData(id, bytes));                       
+                        BlockReaded.AddBlock(new BlockData(id, bytes));
+                        id++;
+                        CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();
                     EventWaitHandleRead.Set();
@@ -80,10 +83,10 @@ namespace GZipTest.Implementations
                 Debugger.Break();
             }
             catch (Exception e)
-            {
-                EventWaitHandleRead.Set();
+            {               
                 Console.WriteLine(e);
                 IsError = true;
+                EventWaitHandleRead.Set();
             }
         }
 
@@ -94,7 +97,7 @@ namespace GZipTest.Implementations
             {
                 while (true && !IsError)
                 {
-                    CheckMemory();
+                    
                     BlockData block;
                     if (BlockReaded.TryTakeBlock(out block))
                     {
@@ -102,18 +105,23 @@ namespace GZipTest.Implementations
                         {
                             using (var gzipStream = new GZipStream(memStream, CompressionMode.Compress))
                             {
+                                CheckMemory();
                                 gzipStream.Write(block.Bytes, 0, block.Bytes.Length);
                             }
-                            BlockProcessed.AddProccessedBlock(new BlockData(block.Number, memStream.ToArray()));
-                            //CountBZ();
+                            //BlockProcessed.AddProccessedBlock(new BlockData(block.Number, memStream.ToArray()));
+                            BlockProcessed.AddBlock(new BlockData(block.Number, memStream.ToArray()));
+                            CountBlocks.CountBZ();
                         }                       
                     }
                     else
                     {
+                        if (BlockReaded.IsFinish)
+                            BlockProcessed.Finish();
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
                     }                       
-                }              
+                }  
+               
                 EventWaitHandleArray[(int)indexThread].Set();
             }
             catch (OutOfMemoryException e)
@@ -121,10 +129,10 @@ namespace GZipTest.Implementations
                 Debugger.Break();
             }
             catch (Exception e)
-            {
-                EventWaitHandleArray[(int)indexThread].Set();
+            {               
                 Console.WriteLine(e);
-                IsError = true; 
+                IsError = true;
+                EventWaitHandleArray[(int)indexThread].Set();
             }
         }
 
@@ -150,11 +158,14 @@ namespace GZipTest.Implementations
                             outputStream.Write(block.Bytes, 0, block.Bytes.Length);
                             blocksWrite++;
                             ProgressInfo.Output(blocksWrite, BlocksCount);
-                            //CountBW();
+                            CountBlocks.CountBW();
                         }
                         else
                         {
-                            ProgressInfo.End();
+                            if (blocksWrite == BlocksCount)
+                                ProgressInfo.End();
+                            else
+                                throw new Exception("Can't write all blocks");
                             EventWaitHandleWrite.Set();
                             return;
                         }                            
@@ -167,10 +178,10 @@ namespace GZipTest.Implementations
                 Debugger.Break();
             }
             catch (Exception e)
-            {
-                EventWaitHandleWrite.Set();
+            {               
                 Console.WriteLine(e);
                 IsError = true;
+                EventWaitHandleWrite.Set();
             }
         }
     }

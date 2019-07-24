@@ -8,7 +8,9 @@ namespace GZipTest.Models
     {
         private Queue<BlockData> _queue;
         private object _lock = new object();
-        private int _number = 0;
+        byte _countCurrentThreads = 0;
+
+        //      private int _number = 0;
         public bool IsFinish { get; private set; }
 
         internal CustomBlockingCollection()
@@ -17,67 +19,109 @@ namespace GZipTest.Models
             IsFinish = false;
         }
 
+       
 
-        internal void AddRawBlock(BlockData block)
+        internal void AddBlock(BlockData block)
         {
-            if (!IsFinish)
-            {
-                Monitor.Enter(_lock);
-                _queue.Enqueue(block);
-                _number++;
-                Monitor.PulseAll(_lock);
-                Monitor.Exit(_lock);
-            }
-        }
-
-        internal void AddProccessedBlock(BlockData block)
-        {
-            int id = block.Number;
-            Monitor.Enter(_lock);
-            if (!IsFinish)
-            {
-                while (id != _number)
-                    Monitor.Wait(_lock);
-                _queue.Enqueue(block);
-                _number++;
-                Monitor.PulseAll(_lock);
-            }
-            Monitor.Exit(_lock);
-        }
-
-        internal bool TryTakeBlock(out BlockData block)
-        {
+            bool _lockWasTaken = false;
             try
             {
-                Monitor.Enter(_lock);
-                bool isTake = false;
-                while (_queue.Count == 0 && !IsFinish)
-                    Monitor.Wait(_lock);
-                if (_queue.Count == 0)
-                {
-                    block = default;
-
-                }
-                else
-                {
-                    block = _queue.Dequeue();
-                    isTake = true;
-                }
-                return isTake;
+                _countCurrentThreads++;
+                Monitor.Enter(_lock, ref _lockWasTaken);               
+                if (!IsFinish)
+                    _queue.Enqueue(block);             
+                Monitor.PulseAll(_lock);
             }
             finally
             {
-                Monitor.Exit(_lock);
+                _countCurrentThreads--;
+                ReleaseLock(_lockWasTaken);
+            }
+        }
+
+
+        //internal void AddRawBlock(BlockData block)
+        //{
+        //    bool _lockWasTaken = false;
+        //    try
+        //    {              
+        //        Monitor.Enter(_lock, ref _lockWasTaken);
+        //        if (!IsFinish)
+        //            _queue.Enqueue(block);
+        //             //     _number++;
+        //        Monitor.PulseAll(_lock);
+        //    }
+        //    finally
+        //    {
+        //        ReleaseLock(_lockWasTaken);
+        //    }
+        //}
+
+        //internal void AddProccessedBlock(BlockData block)
+        //{
+        //    bool _lockWasTaken = false;
+        //    try
+        //    {
+        //          int id = block.Number;
+        //        Monitor.Enter(_lock, ref _lockWasTaken);
+        //        if (!IsFinish)
+        //        {
+        //             //while (id != _number)
+        //             //    Monitor.Wait(_lock);
+        //            _queue.Enqueue(block);
+        //               //  _number++;
+        //            Monitor.PulseAll(_lock);
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        ReleaseLock(_lockWasTaken);
+        //    }
+        //}
+
+        internal bool TryTakeBlock(out BlockData block)
+        {
+            bool _lockWasTaken = false;
+            try
+            {
+                Monitor.Enter(_lock, ref _lockWasTaken);
+                while (_queue.Count == 0 && !IsFinish)
+                    Monitor.Wait(_lock);
+                if (_queue.Count != 0)
+                {
+                    block = _queue.Dequeue();
+                    return true;
+                }
+                block = default;
+                return false;
+            }
+            finally
+            {
+                ReleaseLock(_lockWasTaken);
             }
         }
 
         public void Finish()
         {
-            Monitor.Enter(_lock);
-            IsFinish = true;
-            Monitor.PulseAll(_lock);
-            Monitor.Exit(_lock);
+            bool _lockWasTaken = false;
+            try
+            {
+                Monitor.Enter(_lock, ref _lockWasTaken);
+                while (_countCurrentThreads != 0)
+                    Monitor.Wait(_lock);              
+                IsFinish = true;
+                Monitor.PulseAll(_lock);
+            }
+            finally
+            {
+               ReleaseLock(_lockWasTaken);
+            }
         }
 
+        private void ReleaseLock(bool _lockWasTaken)
+        {
+            if (_lockWasTaken)
+                Monitor.Exit(_lock);            
+        }
     }
 }
