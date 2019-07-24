@@ -1,5 +1,6 @@
 ﻿using GZipTest.Models;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -33,6 +34,11 @@ namespace GZipTest.Implementations
                 WaitFinish();
                 return !IsError;
             }
+            catch (OutOfMemoryException e)
+            {
+                Debugger.Break();
+                return false;
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e);
@@ -52,6 +58,7 @@ namespace GZipTest.Implementations
                     var lenght = input.Length;
                     while (input.Position < lenght && !IsError)
                     {
+                        CheckMemory();
                         int readCount;
                         if (lenght - input.Position < BlockSize)
                             readCount = (int)(lenght - input.Position);
@@ -64,9 +71,13 @@ namespace GZipTest.Implementations
                         id++;                     
                         //CountBR();
                     }
-                    //BlockReaded.Finish();
+                    BlockReaded.Finish();
                     EventWaitHandleRead.Set();
                 }
+            }
+            catch(OutOfMemoryException e)
+            {
+                Debugger.Break();
             }
             catch (Exception e)
             {
@@ -83,6 +94,7 @@ namespace GZipTest.Implementations
             {
                 while (true && !IsError)
                 {
+                    CheckMemory();
                     BlockData block;
                     if (BlockReaded.TryTakeBlock(out block))
                     {
@@ -104,6 +116,10 @@ namespace GZipTest.Implementations
                 }              
                 EventWaitHandleArray[(int)indexThread].Set();
             }
+            catch (OutOfMemoryException e)
+            {
+                Debugger.Break();
+            }
             catch (Exception e)
             {
                 EventWaitHandleArray[(int)indexThread].Set();
@@ -122,6 +138,7 @@ namespace GZipTest.Implementations
                 {
                     using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                     {
+                        CheckMemory();
                         BlockData block;
                         if (BlockProcessed.TryTakeBlock(out block))
                         {                           
@@ -144,6 +161,10 @@ namespace GZipTest.Implementations
                     }
                 }
                 EventWaitHandleWrite.Set();
+            }
+            catch (OutOfMemoryException e)
+            {
+                Debugger.Break();
             }
             catch (Exception e)
             {

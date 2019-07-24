@@ -1,6 +1,7 @@
 ﻿using GZipTest.Interfaces;
 using GZipTest.Models;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -43,7 +44,6 @@ namespace GZipTest.Implementations
 
         public abstract bool Start();
 
- 
         protected void WaitFinish()
         {
             var handle = new WaitHandle[EventWaitHandleArray.Length + 2];
@@ -60,7 +60,6 @@ namespace GZipTest.Implementations
             else
                 return new Decompression(input, output);
         }
-
 
         protected virtual void Dispose(bool disposing)
         {
@@ -80,6 +79,15 @@ namespace GZipTest.Implementations
         public void Dispose()
         {
             Dispose(true);
+        }
+
+ 
+        protected void CheckMemory()
+        {
+            var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+            int mbSize = 1024 * 1024;
+            int mbFree = (int)(ramCounter.NextValue() * mbSize);
+            Console.WriteLine($"\r                       free memory {mbFree} ");
         }
 
     }
