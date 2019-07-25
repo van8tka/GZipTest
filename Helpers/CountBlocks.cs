@@ -5,7 +5,7 @@ namespace GZipTest.Helpers
     //todo: MUST REMOVE CLASS before send prodaction
     public class CountBlocks
     {
-        bool _isShow;
+        private bool _isShow;
         internal CountBlocks(bool isShow)
         {
             _isShow = isShow;
@@ -17,19 +17,19 @@ namespace GZipTest.Helpers
         private int CR = 0;
         private int CW = 0;
         private int CC = 0;
-        object _lock1 = new object();
-        object _lock2 = new object();
-        object _lock3 = new object();
+        private object _lock1 = new object();
+        private object _lock2 = new object();
+        private object _lock3 = new object();
 
         internal void CountBR()
         {
-            if(_isShow)
+            if (_isShow)
             {
                 lock (_lock1)
                     CR++;
                 Console.Write($"\r                                                                     Read blocks {CR}");
             }
-           
+
         }
 
         internal void CountBZ()

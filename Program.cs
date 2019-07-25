@@ -3,9 +3,9 @@ using System;
 
 namespace GZipTest
 {
-    class Program
-    {    
-        static int Main(string[] args)
+    internal class Program
+    {
+        private static int Main(string[] args)
         {
             StartedMessage();
             int result = 1;
@@ -22,7 +22,7 @@ namespace GZipTest
                     {
                         FinishMessage("Failure");
                     }
-                }                  
+                }
             }
             Console.WriteLine(" Push any key to continue..");
             Console.ReadKey();
@@ -37,7 +37,7 @@ namespace GZipTest
 
         private static void FinishMessage(string message)
         {
-            Console.WriteLine($"\n {message}");        
+            Console.WriteLine($"\n {message}");
         }
     }
 }

@@ -42,7 +42,7 @@ namespace GZipTest.Implementations
             }
         }
 
- 
+
 
         private void ReadData()
         {
@@ -65,7 +65,7 @@ namespace GZipTest.Implementations
                         CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();
-                    EventWaitHandleRead.Set();                   
+                    EventWaitHandleRead.Set();
                 }
             }
             catch (Exception e)
@@ -96,26 +96,23 @@ namespace GZipTest.Implementations
                                 int dataLenght = BitConverter.ToInt32(block.Bytes, lenghtBlock - 4);
                                 byte[] data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
-                                //todo:
-                                //здесь отделяем от data первые 8 байт - 4 байта позиция записи, 4 байта размер файла
-                                //- helpersdata И получаем позицию и размер файла записи
+                                //отделяем от data первые 8 байт - 4 байта позиция записи, 4 байта размер файла
                                 int position;
                                 int sizefile;
                                 data = GetHelpersData(out position, out sizefile, data);
-
                                 BlockProcessed.AddBlock(new BlockData(position, sizefile, data));
                                 BlocksProcessedCount++;
                                 CountBlocks.CountBZ();
-                            }                           
+                            }
                         }
                     }
                     else
                     {
                         if (BlockReaded.IsFinish && BlocksProcessedCount == BlocksCount)
                             BlockProcessed.Finish();
-                        EventWaitHandleArray[(int)indexThread].Set();                        
+                        EventWaitHandleArray[(int)indexThread].Set();
                         return;
-                    }                      
+                    }
                 }
                 EventWaitHandleArray[(int)indexThread].Set();
             }
@@ -126,16 +123,20 @@ namespace GZipTest.Implementations
                 EventWaitHandleArray[(int)indexThread].Set();
             }
         }
-
+        /// <summary>
+        /// метод для получения позиции массива байт, размера файла до архивации, и массив байт несущих полезную нагрузку(данных файла) 
+        /// </summary>       
         private byte[] GetHelpersData(out int position, out int sizefile, byte[] data)
         {
-            var tempBytes = GetHelpersDataFromByteArray(data, out position);
-            tempBytes = GetHelpersDataFromByteArray(tempBytes, out sizefile);
-            if(BlocksCount == 0)
-                GetBlockCount(BlockSize, sizefile);
+            var tempBytes = DataManager.GetHelpersDataFromByteArray(data, out position);
+            tempBytes = DataManager.GetHelpersDataFromByteArray(tempBytes, out sizefile);
+            if (BlocksCount == 0)
+                BlocksCount = GetBlockCount(BlockSize, sizefile);
             return tempBytes;
         }
-
+        /// <summary>
+        /// метод получения общего количества блоков исходя из размера файла 
+        /// </summary>      
         private int GetBlockCount(int blockSize, int sizefile)
         {
             return (int)Math.Ceiling((double)sizefile / blockSize);
@@ -154,7 +155,7 @@ namespace GZipTest.Implementations
                     {
                         using (var outputStream = new FileStream(OutputFile, FileMode.Open, FileAccess.Write))
                         {
-                            if(!isSetLenght)
+                            if (!isSetLenght)
                             {
                                 outputStream.SetLength(block.SizeFile);
                                 isSetLenght = true;
@@ -174,7 +175,7 @@ namespace GZipTest.Implementations
                             throw new Exception("Can't write all blocks");
                         EventWaitHandleWrite.Set();
                         return;
-                    }                       
+                    }
                 }
                 EventWaitHandleWrite.Set();
             }

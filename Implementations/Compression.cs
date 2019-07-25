@@ -10,16 +10,9 @@ namespace GZipTest.Implementations
     internal class Compression : AbstractArchiver
     {
         //ctor
-        internal Compression(string inputfile, string outputfile) : base(inputfile, outputfile) {
-            BlocksCount = GetBlockCount(BlockSize);
-        }
-
-        private int GetBlockCount(int blockSize)
+        internal Compression(string inputfile, string outputfile) : base(inputfile, outputfile)
         {
-            if (string.IsNullOrEmpty(InputFile))
-                return 0;
-            var file = new FileInfo(InputFile);
-            return (int)Math.Ceiling((double)file.Length / blockSize);
+            BlocksCount = GetBlockCount(BlockSize);
         }
 
         public override bool Start()
@@ -47,7 +40,7 @@ namespace GZipTest.Implementations
                 WaitFinish();
                 return !IsError;
             }
-            catch (OutOfMemoryException e)
+            catch (OutOfMemoryException)
             {
                 Debugger.Break();
                 return false;
@@ -59,12 +52,10 @@ namespace GZipTest.Implementations
             }
         }
 
- 
-
         private void ReadData()
         {
             try
-            {             
+            {
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
                 {
                     var lenght = input.Length;
@@ -78,16 +69,16 @@ namespace GZipTest.Implementations
                             readCount = BlockSize;
                         var bytes = new byte[readCount];
                         input.Read(bytes, 0, readCount);
-                        //добавим доп инф. о позиции данных и размере файла
-                        bytes = AddedHelpersData((int)input.Position-readCount, (int)lenght, bytes);
-                        BlockReaded.AddBlock(new BlockData(bytes));                      
+                        //добавим доп инф. о позиции массива байт в файле и размере файла
+                        bytes = AddedHelpersData((int)input.Position - readCount, (int)lenght, bytes);
+                        BlockReaded.AddBlock(new BlockData(bytes));
                         CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();
                     EventWaitHandleRead.Set();
                 }
             }
-            catch(OutOfMemoryException e)
+            catch (OutOfMemoryException)
             {
                 Debugger.Break();
             }
@@ -98,16 +89,19 @@ namespace GZipTest.Implementations
                 EventWaitHandleRead.Set();
             }
         }
-
+        /// <summary>
+        /// добавление в массив байт 8 байт несущих доп. инф.: первые 4 байта - позиция массива байт, вторые 4 байта - размер файла до архивации
+        /// </summary>       
+        /// <returns>массив байт с добавленной доп. информацией 8 байт</returns>
         private byte[] AddedHelpersData(int position, int lenght, byte[] bytes)
         {
-           return AddedHelpersDataToByteArray(position, AddedHelpersDataToByteArray(lenght, bytes));
+            return DataManager.AddedHelpersDataToByteArray(position, DataManager.AddedHelpersDataToByteArray(lenght, bytes));
         }
 
         private void CompressData(object indexThread)
         {
             try
-            {             
+            {
                 while (true && !IsError)
                 {
                     BlockData block;
@@ -119,11 +113,11 @@ namespace GZipTest.Implementations
                             {
                                 CheckMemory();
                                 gzipStream.Write(block.Bytes, 0, block.Bytes.Length);
-                            }                            
+                            }
                             BlockProcessed.AddBlock(new BlockData(memStream.ToArray()));
                             BlocksProcessedCount++;
                             CountBlocks.CountBZ();
-                        }                       
+                        }
                     }
                     else
                     {
@@ -131,11 +125,11 @@ namespace GZipTest.Implementations
                             BlockProcessed.Finish();
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
-                    }                       
-                }                
+                    }
+                }
                 EventWaitHandleArray[(int)indexThread].Set();
             }
-            catch (OutOfMemoryException e)
+            catch (OutOfMemoryException)
             {
                 Debugger.Break();
             }
@@ -147,20 +141,19 @@ namespace GZipTest.Implementations
             }
         }
 
-
         private void WriteData()
         {
             try
             {
                 int blocksWrite = 0;
-                while (true && ! IsError)
+                while (true && !IsError)
                 {
                     using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                     {
                         CheckMemory();
                         BlockData block;
                         if (BlockProcessed.TryTakeBlock(out block))
-                        {                           
+                        {
                             //получим размер сжатых данных для последующей декомпрессии
                             var lenghtOfBlock = BitConverter.GetBytes(block.Bytes.Length);
                             /*запишем информацию о размере блока для последующей декомперссии и записи, вместо
@@ -179,21 +172,32 @@ namespace GZipTest.Implementations
                                 throw new Exception("Can't write all blocks");
                             EventWaitHandleWrite.Set();
                             return;
-                        }                            
+                        }
                     }
                 }
                 EventWaitHandleWrite.Set();
             }
-            catch (OutOfMemoryException e)
+            catch (OutOfMemoryException)
             {
                 Debugger.Break();
             }
             catch (Exception e)
-            {              
-                Console.WriteLine(Environment.NewLine+e);
+            {
+                Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
                 EventWaitHandleWrite.Set();
             }
+        }
+
+        /// <summary>
+        /// получение общего колличества блоков в зависимости от исходного размера входящего файла
+        /// </summary>       
+        private int GetBlockCount(int blockSize)
+        {
+            if (string.IsNullOrEmpty(InputFile))
+                return 0;
+            var file = new FileInfo(InputFile);
+            return (int)Math.Ceiling((double)file.Length / blockSize);
         }
     }
 }

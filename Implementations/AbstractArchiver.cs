@@ -2,7 +2,6 @@
 using GZipTest.Interfaces;
 using GZipTest.Models;
 using System;
-using System.IO;
 using System.Threading;
 
 namespace GZipTest.Implementations
@@ -17,13 +16,15 @@ namespace GZipTest.Implementations
             EventWaitHandleArray = new ManualResetEvent[CountProcessors()];
             BlockReaded = new CustomBlockingCollection();
             BlockProcessed = new CustomBlockingCollection();
-            IsError = false;           
+            DataManager = new AdditionalDataManager();
+            IsError = false;
+             
             //todo: must remove this class
-            CountBlocks = new CountBlocks(true);
+            CountBlocks = new CountBlocks(false);
         }
         //todo: must remove this class
-        protected CountBlocks CountBlocks { get;private set; }
- 
+        protected CountBlocks CountBlocks { get; private set; }
+
         private bool _disposedValue = false;
         protected bool IsError;
         protected readonly string InputFile;
@@ -34,6 +35,7 @@ namespace GZipTest.Implementations
         protected EventWaitHandle[] EventWaitHandleArray;
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
+        protected readonly AdditionalDataManager DataManager;
 
         protected CustomBlockingCollection BlockReaded { get; set; }
         protected CustomBlockingCollection BlockProcessed { get; set; }
@@ -79,32 +81,15 @@ namespace GZipTest.Implementations
             Dispose(true);
         }
 
- 
+
         protected void CheckMemory()
         {
             //var ramCounter = new PerformanceCounter("Memory", "Available MBytes");           
             //float mbFree = ramCounter.NextValue();
             //Console.Write($"\r                         free memory {mbFree} ");
         }
- 
-        public byte[] AddedHelpersDataToByteArray(int data, byte[] bytes)
-        {
-            byte[] dataBytes = BitConverter.GetBytes(data);
-            var resultBytes = new byte[dataBytes.Length + bytes.Length];
-            dataBytes.CopyTo(resultBytes, 0);
-            bytes.CopyTo(resultBytes, dataBytes.Length);
-            return resultBytes;
-        }
 
-        public byte[] GetHelpersDataFromByteArray(byte[] bytes, out int data)
-        {
-            int dataLenght = 4;
-            byte[] bytesResult = new byte[bytes.Length - dataLenght];         
-            Array.Copy(bytes, dataLenght, bytesResult,0, bytesResult.Length);           
-            byte[] tempBytes = { bytes[0], bytes[1], bytes[2], bytes[3] };        
-            data = BitConverter.ToInt32(tempBytes, 0);
-            return bytesResult;
-        }
+       
 
     }
 }

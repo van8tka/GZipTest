@@ -12,7 +12,7 @@ namespace GZipTest
         /// <param name="args">список аргументов проверки</param>
         /// <returns>true-валидные данные, false-невалидные</returns>
         internal static bool Validate(string[] args)
-        {          
+        {
             string action;
             string input;
             string output;
@@ -23,13 +23,13 @@ namespace GZipTest
                 input = args[1];
                 output = args[2];
                 if (CheckAction(action) && CheckInputFile(input) && CheckOutputFile(output))
-                    success = true;                                
-            }  
-            if(!success)
+                    success = true;
+            }
+            if (!success)
             {
                 Console.WriteLine("Error input parameters.");
                 Console.ReadLine();
-            }          
+            }
             return success;
         }
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GZipTest 
+namespace GZipTest
 {
     internal class ProgressInfo
     {
@@ -8,9 +8,9 @@ namespace GZipTest
         internal static void Output(int position, int length)
         {
             int currentPersent = 0;
-            if (length!=0)
-              currentPersent =  (position * persent / length);          
-            Console.Write($"\r progress: {currentPersent} %");          
+            if (length != 0)
+                currentPersent = (position * persent / length);
+            Console.Write($"\r progress: {currentPersent} %");
         }
 
         internal static void End()

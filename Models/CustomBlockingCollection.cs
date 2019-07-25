@@ -7,7 +7,7 @@ namespace GZipTest.Models
     public class CustomBlockingCollection
     {
         private Queue<BlockData> _queue;
-        private object _lock = new object();   
+        private object _lock = new object();
 
         public bool IsFinish { get; private set; }
 
@@ -22,14 +22,14 @@ namespace GZipTest.Models
             bool _lockWasTaken = false;
             try
             {
-                Monitor.Enter(_lock, ref _lockWasTaken);               
+                Monitor.Enter(_lock, ref _lockWasTaken);
                 if (!IsFinish)
-                    _queue.Enqueue(block);             
+                    _queue.Enqueue(block);
                 Monitor.PulseAll(_lock);
             }
             finally
-            {         
-                 ReleaseLock(_lockWasTaken);
+            {
+                ReleaseLock(_lockWasTaken);
             }
         }
 
@@ -60,20 +60,20 @@ namespace GZipTest.Models
             bool _lockWasTaken = false;
             try
             {
-                Monitor.Enter(_lock, ref _lockWasTaken);        
+                Monitor.Enter(_lock, ref _lockWasTaken);
                 IsFinish = true;
                 Monitor.PulseAll(_lock);
             }
             finally
             {
-               ReleaseLock(_lockWasTaken);
+                ReleaseLock(_lockWasTaken);
             }
         }
 
         private void ReleaseLock(bool _lockWasTaken)
         {
             if (_lockWasTaken)
-                Monitor.Exit(_lock);            
+                Monitor.Exit(_lock);
         }
     }
 }
