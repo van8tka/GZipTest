@@ -6,13 +6,15 @@ namespace GZipTest.Helpers
 {
     public class MemoryValidator
     {
-        private static long MemoryForApp = 1024 * 1024 * 1024;
+        //private static long MemoryForApp = 1024 * 1024 * 1024;
 
+ //FIX ME: возможно переполнение - включить проверку на переполнение 
         public static bool ValidateMemory(int blockSize, int borderCapacity)
         {
             try
             {
-                var neededRam = CalculateNeededRam(blockSize, borderCapacity);
+                byte helpersDataAmount = 16;
+                var neededRam = CalculateNeededRam(blockSize + helpersDataAmount, borderCapacity);
                 var configRam = GetTotalMemory();
                 if (neededRam > configRam)
                     throw new Exception("The configuration of your computer is not available to run this program because the necessary amount of RAM is not installed.");
@@ -56,7 +58,7 @@ namespace GZipTest.Helpers
         {
             //умножаем на 2 - т.к. два контейнера для считанных данных и для обработанных(gzip) данных
             long memoryForContainers = borderCapacity * blockSize * 2;
-            memoryForContainers += MemoryForApp;
+            memoryForContainers += (long)(memoryForContainers*0.25);
             return memoryForContainers;
         }
     }
