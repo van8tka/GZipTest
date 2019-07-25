@@ -50,6 +50,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -62,6 +63,7 @@
     <Compile Include="Helpers\Constants.cs" />
     <Compile Include="Helpers\CountBlocks.cs" />
     <Compile Include="Helpers\AdditionalDataManager.cs" />
+    <Compile Include="Helpers\MemoryValidator.cs" />
     <Compile Include="Helpers\ProgressInfo.cs" />
     <Compile Include="Models\BlockData.cs" />
     <Compile Include="Implementations\Compression.cs" />

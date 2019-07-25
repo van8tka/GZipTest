@@ -8,7 +8,7 @@ namespace GZipTest.Implementations
 {
     internal class Decompression : AbstractArchiver
     {
-        internal Decompression(string input, string output) : base(input, output) { }
+        internal Decompression(string input, string output, int blockSize, int boundedCapacity) : base(input, output, blockSize, boundedCapacity) { }
 
         public override bool Start()
         {
@@ -49,8 +49,7 @@ namespace GZipTest.Implementations
             try
             {
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
-                {
-                    int id = 0;
+                {                  
                     while (input.Position < input.Length && !IsError)
                     {
                         //читаем заголовок запакованного блока и получаем размер полезной нагрузки указанной при записи
@@ -60,8 +59,7 @@ namespace GZipTest.Implementations
                         var bytes = new byte[lenghtBlock];
                         headerGzip.CopyTo(bytes, 0);
                         input.Read(bytes, 8, lenghtBlock - 8);
-                        BlockReaded.AddBlock(new BlockData(bytes));
-                        id++;
+                        BlockReaded.AddBlock(new BlockData(bytes));                     
                         CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();
@@ -97,8 +95,8 @@ namespace GZipTest.Implementations
                                 byte[] data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
                                 //отделяем от data первые 8 байт - 4 байта позиция записи, 4 байта размер файла
-                                int position;
-                                int sizefile;
+                                long position;
+                                long sizefile;
                                 data = GetHelpersData(out position, out sizefile, data);
                                 BlockProcessed.AddBlock(new BlockData(position, sizefile, data));
                                 BlocksProcessedCount++;
@@ -126,7 +124,7 @@ namespace GZipTest.Implementations
         /// <summary>
         /// метод для получения позиции массива байт, размера файла до архивации, и массив байт несущих полезную нагрузку(данных файла) 
         /// </summary>       
-        private byte[] GetHelpersData(out int position, out int sizefile, byte[] data)
+        private byte[] GetHelpersData(out long position, out long sizefile, byte[] data)
         {
             var tempBytes = DataManager.GetHelpersDataFromByteArray(data, out position);
             tempBytes = DataManager.GetHelpersDataFromByteArray(tempBytes, out sizefile);
@@ -137,7 +135,7 @@ namespace GZipTest.Implementations
         /// <summary>
         /// метод получения общего количества блоков исходя из размера файла 
         /// </summary>      
-        private int GetBlockCount(int blockSize, int sizefile)
+        private int GetBlockCount(int blockSize, long sizefile)
         {
             return (int)Math.Ceiling((double)sizefile / blockSize);
         }
@@ -169,7 +167,7 @@ namespace GZipTest.Implementations
                     }
                     else
                     {
-                        if (blocksWrite == BlocksCount)
+                        if (blocksWrite >= BlocksCount)
                             ProgressInfo.End();
                         else
                             throw new Exception("Can't write all blocks");

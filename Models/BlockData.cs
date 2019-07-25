@@ -3,11 +3,11 @@
 
     internal struct BlockData
     {
-        internal int SizeFile { get; private set; }
-        internal int Position { get; private set; }
+        internal long SizeFile { get; private set; }
+        internal long Position { get; private set; }
         internal byte[] Bytes { get; private set; }
 
-        internal BlockData(int position, int sizeFile, byte[] bytes)
+        internal BlockData(long position, long sizeFile, byte[] bytes)
         {
             SizeFile = sizeFile;
             Position = position;

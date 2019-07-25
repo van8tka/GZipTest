@@ -9,18 +9,18 @@ namespace GZipTest.Implementations
     public abstract class AbstractArchiver : IArchiver, IDisposable
     {
         //ctor
-        protected AbstractArchiver(string input, string output)
+        protected AbstractArchiver(string input, string output, int blockSize, int boundedCapacity)
         {
             InputFile = input;
             OutputFile = output;
             EventWaitHandleArray = new ManualResetEvent[CountProcessors()];
-            BlockReaded = new CustomBlockingCollection();
-            BlockProcessed = new CustomBlockingCollection();
+            BlockReaded = new CustomBlockingCollection(boundedCapacity);
+            BlockProcessed = new CustomBlockingCollection(boundedCapacity);
             DataManager = new AdditionalDataManager();
             IsError = false;
-             
-            //todo: must remove this class
-            CountBlocks = new CountBlocks(false);
+            BlockSize = blockSize;
+           //todo: must remove this class
+           CountBlocks = new CountBlocks(false);
         }
         //todo: must remove this class
         protected CountBlocks CountBlocks { get; private set; }
@@ -31,7 +31,7 @@ namespace GZipTest.Implementations
         protected readonly string OutputFile;
         protected int BlocksCount { get; set; }
         protected int BlocksProcessedCount = 0;
-        protected int BlockSize = 1024 * 1024;
+        protected readonly int BlockSize;
         protected EventWaitHandle[] EventWaitHandleArray;
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
@@ -53,12 +53,12 @@ namespace GZipTest.Implementations
             WaitHandle.WaitAll(handle);
         }
 
-        public static AbstractArchiver CreateArchiver(string action, string input, string output)
+        public static AbstractArchiver CreateArchiver(string action, string input, string output, int blockSize, int boundedCapacity)
         {
             if (action.Equals(Constants.COMPRESS, StringComparison.OrdinalIgnoreCase))
-                return new Compression(input, output);
+                return new Compression(input, output, blockSize, boundedCapacity);
             else
-                return new Decompression(input, output);
+                return new Decompression(input, output, blockSize, boundedCapacity);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -80,16 +80,6 @@ namespace GZipTest.Implementations
         {
             Dispose(true);
         }
-
-
-        protected void CheckMemory()
-        {
-            //var ramCounter = new PerformanceCounter("Memory", "Available MBytes");           
-            //float mbFree = ramCounter.NextValue();
-            //Console.Write($"\r                         free memory {mbFree} ");
-        }
-
-       
-
+ 
     }
 }

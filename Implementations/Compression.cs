@@ -10,7 +10,7 @@ namespace GZipTest.Implementations
     internal class Compression : AbstractArchiver
     {
         //ctor
-        internal Compression(string inputfile, string outputfile) : base(inputfile, outputfile)
+        internal Compression(string input, string output, int blockSize, int boundedCapacity) : base(input, output, blockSize, boundedCapacity)
         {
             BlocksCount = GetBlockCount(BlockSize);
         }
@@ -61,7 +61,6 @@ namespace GZipTest.Implementations
                     var lenght = input.Length;
                     while (input.Position < lenght && !IsError)
                     {
-                        CheckMemory();
                         int readCount;
                         if (lenght - input.Position < BlockSize)
                             readCount = (int)(lenght - input.Position);
@@ -70,7 +69,7 @@ namespace GZipTest.Implementations
                         var bytes = new byte[readCount];
                         input.Read(bytes, 0, readCount);
                         //добавим доп инф. о позиции массива байт в файле и размере файла
-                        bytes = AddedHelpersData((int)input.Position - readCount, (int)lenght, bytes);
+                        bytes = AddedHelpersData(input.Position - readCount, lenght, bytes);
                         BlockReaded.AddBlock(new BlockData(bytes));
                         CountBlocks.CountBR();
                     }
@@ -93,7 +92,7 @@ namespace GZipTest.Implementations
         /// добавление в массив байт 8 байт несущих доп. инф.: первые 4 байта - позиция массива байт, вторые 4 байта - размер файла до архивации
         /// </summary>       
         /// <returns>массив байт с добавленной доп. информацией 8 байт</returns>
-        private byte[] AddedHelpersData(int position, int lenght, byte[] bytes)
+        private byte[] AddedHelpersData(long position, long lenght, byte[] bytes)
         {
             return DataManager.AddedHelpersDataToByteArray(position, DataManager.AddedHelpersDataToByteArray(lenght, bytes));
         }
@@ -110,8 +109,7 @@ namespace GZipTest.Implementations
                         using (var memStream = new MemoryStream())
                         {
                             using (var gzipStream = new GZipStream(memStream, CompressionMode.Compress))
-                            {
-                                CheckMemory();
+                            {                       
                                 gzipStream.Write(block.Bytes, 0, block.Bytes.Length);
                             }
                             BlockProcessed.AddBlock(new BlockData(memStream.ToArray()));
@@ -150,7 +148,6 @@ namespace GZipTest.Implementations
                 {
                     using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
                     {
-                        CheckMemory();
                         BlockData block;
                         if (BlockProcessed.TryTakeBlock(out block))
                         {

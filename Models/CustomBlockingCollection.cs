@@ -8,11 +8,13 @@ namespace GZipTest.Models
     {
         private Queue<BlockData> _queue;
         private object _lock = new object();
+        private int _boundedCapacity;  
 
         public bool IsFinish { get; private set; }
 
-        internal CustomBlockingCollection()
+        internal CustomBlockingCollection(int boundedCapacity)
         {
+            _boundedCapacity = boundedCapacity;
             _queue = new Queue<BlockData>();
             IsFinish = false;
         }
@@ -24,7 +26,11 @@ namespace GZipTest.Models
             {
                 Monitor.Enter(_lock, ref _lockWasTaken);
                 if (!IsFinish)
+                {
+                    while (_queue.Count >= _boundedCapacity)
+                        Monitor.Wait(_lock);
                     _queue.Enqueue(block);
+                }                  
                 Monitor.PulseAll(_lock);
             }
             finally
@@ -44,6 +50,7 @@ namespace GZipTest.Models
                 if (_queue.Count != 0)
                 {
                     block = _queue.Dequeue();
+                    Monitor.PulseAll(_lock);
                     return true;
                 }
                 block = default;

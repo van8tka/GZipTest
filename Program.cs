@@ -1,17 +1,21 @@
-﻿using GZipTest.Implementations;
+﻿using GZipTest.Helpers;
+using GZipTest.Implementations;
 using System;
 
 namespace GZipTest
 {
     internal class Program
     {
+       private static int BlockSize = 1024 * 1024;
+       private static int BorderCapacity = 1000;
+
         private static int Main(string[] args)
         {
-            StartedMessage();
-            int result = 1;
-            if (ArgumentsValidator.Validate(args))
+            StartedMessage();           
+           int result = 1;
+            if (ArgumentsValidator.Validate(args) && MemoryValidator.ValidateMemory(BlockSize, BorderCapacity))
             {
-                using (var archiver = AbstractArchiver.CreateArchiver(args[0], args[1], args[2]))
+                using (var archiver = AbstractArchiver.CreateArchiver(args[0], args[1], args[2], BlockSize, BorderCapacity))
                 {
                     if (archiver.Start())
                     {
