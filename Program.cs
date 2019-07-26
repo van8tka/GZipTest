@@ -7,13 +7,15 @@ namespace GZipTest
     internal class Program
     {
        private static int BlockSize = 1024 * 1024;
-       private static int BorderCapacity = 1000;
+        //установим минимальное кол-во блоков для одного контейнера
+        //приналичии достаточного кол-ва RAM увеличим это значение
+       private static int BorderCapacity = 10;
 
         private static int Main(string[] args)
         {
             StartedMessage();           
            int result = 1;
-            if (ArgumentsValidator.Validate(args) && MemoryValidator.ValidateMemory(BlockSize, BorderCapacity))
+            if (ArgumentsValidator.Validate(args) && MemoryValidator.ValidateMemory(BlockSize,ref BorderCapacity))
             {
                 using (var archiver = AbstractArchiver.CreateArchiver(args[0], args[1], args[2], BlockSize, BorderCapacity))
                 {

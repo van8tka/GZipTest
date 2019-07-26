@@ -1,6 +1,5 @@
 ﻿using GZipTest.Models;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -39,12 +38,7 @@ namespace GZipTest.Implementations
                 threadWrite.Start();
                 WaitFinish();
                 return !IsError;
-            }
-            catch (OutOfMemoryException)
-            {
-                Debugger.Break();
-                return false;
-            }
+            }            
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
@@ -73,18 +67,21 @@ namespace GZipTest.Implementations
                         BlockReaded.AddBlock(new BlockData(bytes));
                         CountBlocks.CountBR();
                     }
-                    BlockReaded.Finish();
-                    EventWaitHandleRead.Set();
+                    BlockReaded.Finish();                  
                 }
             }
             catch (OutOfMemoryException)
             {
-                Debugger.Break();
+                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
+                IsError = true;               
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
-                IsError = true;
+                IsError = true;                
+            }
+            finally
+            {
                 EventWaitHandleRead.Set();
             }
         }
@@ -124,17 +121,20 @@ namespace GZipTest.Implementations
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
                     }
-                }
-                EventWaitHandleArray[(int)indexThread].Set();
+                }           
             }
             catch (OutOfMemoryException)
             {
-                Debugger.Break();
+                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
+                IsError = true;
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
+            }
+            finally
+            {
                 EventWaitHandleArray[(int)indexThread].Set();
             }
         }
@@ -172,16 +172,20 @@ namespace GZipTest.Implementations
                         }
                     }
                 }
-                EventWaitHandleWrite.Set();
             }
             catch (OutOfMemoryException)
             {
-                Debugger.Break();
+                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
+                IsError = true;
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
+              
+            }
+            finally
+            {
                 EventWaitHandleWrite.Set();
             }
         }

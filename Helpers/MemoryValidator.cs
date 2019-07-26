@@ -6,60 +6,120 @@ namespace GZipTest.Helpers
 {
     public class MemoryValidator
     {
-        //private static long MemoryForApp = 1024 * 1024 * 1024;
-
- //FIX ME: возможно переполнение - включить проверку на переполнение 
-        public static bool ValidateMemory(int blockSize, int borderCapacity)
+         
+        //FIX ME: возможно переполнение - включить проверку на переполнение 
+        public static bool ValidateMemory(int blockSize, ref int borderCapacity)
         {
             try
             {
                 byte helpersDataAmount = 16;
-                var neededRam = CalculateNeededRam(blockSize + helpersDataAmount, borderCapacity);
+                int fullBlockSize = blockSize + helpersDataAmount;
+                var neededRam = CalculateMinimumNeededRam(fullBlockSize,ref borderCapacity);
                 var configRam = GetTotalMemory();
                 if (neededRam > configRam)
                     throw new Exception("The configuration of your computer is not available to run this program because the necessary amount of RAM is not installed.");
                 var freeRam = GetFreeMemory();
                 if (neededRam > freeRam)
                     throw new Exception("You don't have free RAM, try to close some applications to free RAM..");
+                //если необходимое кол-во памяти меньше чем 75% свободной оперативной памяти, то пересчитаем границу кол-ва блоков для эффективного использования оперативной памяти
+                if (neededRam < (freeRam - freeRam * 0.25))
+                    borderCapacity = SetAvailableBorderCapacity(freeRam, fullBlockSize);
                 return true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e);
                 return false;
-            }           
+            }
+        }
+
+        /// <summary>
+        /// устанавливаем границу кол-ва блоков для наиболее полного использования свободной оперативной памяти
+        /// </summary>       
+        private static int SetAvailableBorderCapacity(long freeRam, int fullBlockSize)
+        {
+            checked
+            {
+                try
+                {
+                    //оставляем 25% памяти свободной
+                    long freeRamWithoutSaveSpace = (long)(freeRam - freeRam * 0.25);
+                    //25% запас для работы приложения GZipTest
+                    long ramForBlocks = (long)(freeRamWithoutSaveSpace - freeRamWithoutSaveSpace *0.25);
+                    //всего кол-во блоков
+                    long allCountBlocksAvailable = ramForBlocks / fullBlockSize;
+                    //возвращаем границу количества блока для одного контейнера
+                    return (int)allCountBlocksAvailable / 2;
+                }
+                catch (OverflowException e)
+                {
+                    Console.WriteLine("Total memory is too large, error overflow type.");
+                    throw;
+                }
+            }            
         }
 
         private static long GetTotalMemory()
         {
-            var query =  "SELECT Capacity FROM Win32_PhysicalMemory";
-            var managementObject = new ManagementObjectSearcher(query);
-            long total = 0;
-            foreach (var item in managementObject.Get())
+            checked
             {
-                total += Convert.ToInt64(item.Properties["Capacity"].Value);
-            }            
-            return total*1024*1024;
+                try
+                {
+                    var query = "SELECT Capacity FROM Win32_PhysicalMemory";
+                    var managementObject = new ManagementObjectSearcher(query);
+                    long total = 0;
+                    foreach (var item in managementObject.Get())
+                    {
+                        total += Convert.ToInt64(item.Properties["Capacity"].Value);
+                    }
+                    return total * 1024 * 1024;
+                }
+                catch (OverflowException e)
+                {
+                    Console.WriteLine("Total memory is too large, error overflow type.");
+                    throw;
+                }
+            }
         }
 
         private static long GetFreeMemory()
         {
-            var ramCounter = new PerformanceCounter("Memory", "Available Bytes");
-            return (long)ramCounter.NextValue();
+            checked
+            {
+                try
+                {
+                    var ramCounter = new PerformanceCounter("Memory", "Available Bytes");
+                    return (long)ramCounter.NextValue();
+                }
+                catch (OverflowException e)
+                {
+                    Console.WriteLine("Available memory is too large, error overflow type.");
+                    throw;
+                }
+            }
         }
 
         /// <summary>
-        /// расчет необходимой памяти для нормальной работы программы
-        /// </summary>
-        /// <param name="borderCapacity">верхняя граница количества сохраняемых блоков</param>
-        /// <param name="blockSize">размер блока</param>
-        /// <returns></returns>
-        private static long CalculateNeededRam(int blockSize, int borderCapacity)
+        /// расчет минимально необходимой памяти для нормальной работы программы
+        /// </summary>         
+        private static long CalculateMinimumNeededRam(int blockSize, ref int borderCapacity)
         {
-            //умножаем на 2 - т.к. два контейнера для считанных данных и для обработанных(gzip) данных
-            long memoryForContainers = borderCapacity * blockSize * 2;
-            memoryForContainers += (long)(memoryForContainers*0.25);
-            return memoryForContainers;
+            checked
+            {
+                try
+                {
+                    //умножаем на 2 - т.к. два контейнера для считанных данных и для обработанных(gzip) данных
+                    long memoryForContainers = borderCapacity * blockSize * 2;
+                    //25% для работы приложения
+                    memoryForContainers += (long)(memoryForContainers * 0.25);
+                    return memoryForContainers;
+                }
+                catch (OverflowException e)
+                {
+                    Console.WriteLine("Amount of needed memory is too large, error overflow type.");
+                    throw;
+                }
+            }
         }
     }
 }

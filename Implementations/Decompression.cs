@@ -66,10 +66,18 @@ namespace GZipTest.Implementations
                     EventWaitHandleRead.Set();
                 }
             }
+            catch (OutOfMemoryException)
+            {
+                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again.");
+                IsError = true;
+            }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
-                IsError = true;
+                IsError = true;              
+            }
+            finally
+            {
                 EventWaitHandleRead.Set();
             }
         }
@@ -111,13 +119,21 @@ namespace GZipTest.Implementations
                         EventWaitHandleArray[(int)indexThread].Set();
                         return;
                     }
-                }
-                EventWaitHandleArray[(int)indexThread].Set();
+                }              
+            }
+            catch (OutOfMemoryException)
+            {
+                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again.");
+                IsError = true;
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
+                
+            }
+            finally
+            {
                 EventWaitHandleArray[(int)indexThread].Set();
             }
         }
@@ -174,13 +190,21 @@ namespace GZipTest.Implementations
                         EventWaitHandleWrite.Set();
                         return;
                     }
-                }
-                EventWaitHandleWrite.Set();
+                }              
+            }
+            catch (OutOfMemoryException)
+            {
+                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again.");
+                IsError = true;
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
                 IsError = true;
+               
+            }
+            finally
+            {
                 EventWaitHandleWrite.Set();
             }
         }
