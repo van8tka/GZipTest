@@ -65,7 +65,6 @@ namespace GZipTest.Implementations
                         //добавим доп инф. о позиции массива байт в файле и размере файла
                         bytes = AddedHelpersData(input.Position - readCount, lenght, bytes);
                         BlockReaded.AddBlock(new BlockData(bytes));
-                        CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();                  
                 }
@@ -111,7 +110,6 @@ namespace GZipTest.Implementations
                             }
                             BlockProcessed.AddBlock(new BlockData(memStream.ToArray()));
                             BlocksProcessedCount++;
-                            CountBlocks.CountBZ();
                         }
                     }
                     else
@@ -159,7 +157,6 @@ namespace GZipTest.Implementations
                             outputStream.Write(block.Bytes, 0, block.Bytes.Length);
                             blocksWrite++;
                             ProgressInfo.Output(blocksWrite, BlocksCount);
-                            CountBlocks.CountBW();
                         }
                         else
                         {

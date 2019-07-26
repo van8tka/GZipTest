@@ -19,12 +19,9 @@ namespace GZipTest.Implementations
             DataManager = new AdditionalDataManager();
             IsError = false;
             BlockSize = blockSize;
-           //todo: must remove this class
-           CountBlocks = new CountBlocks(false);
+           
         }
-        //todo: must remove this class
-        protected CountBlocks CountBlocks { get; private set; }
-
+       
         private bool _disposedValue = false;
         protected bool IsError;
         protected readonly string InputFile;

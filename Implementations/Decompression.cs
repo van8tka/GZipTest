@@ -60,7 +60,6 @@ namespace GZipTest.Implementations
                         headerGzip.CopyTo(bytes, 0);
                         input.Read(bytes, 8, lenghtBlock - 8);
                         BlockReaded.AddBlock(new BlockData(bytes));                     
-                        CountBlocks.CountBR();
                     }
                     BlockReaded.Finish();
                     EventWaitHandleRead.Set();
@@ -108,7 +107,6 @@ namespace GZipTest.Implementations
                                 data = GetHelpersData(out position, out sizefile, data);
                                 BlockProcessed.AddBlock(new BlockData(position, sizefile, data));
                                 BlocksProcessedCount++;
-                                CountBlocks.CountBZ();
                             }
                         }
                     }
@@ -178,7 +176,6 @@ namespace GZipTest.Implementations
                             outputStream.Write(block.Bytes, 0, block.Bytes.Length);
                             blocksWrite++;
                             ProgressInfo.Output(blocksWrite, BlocksCount);
-                            CountBlocks.CountBW();
                         }
                     }
                     else

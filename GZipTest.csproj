@@ -61,7 +61,6 @@
   <ItemGroup>
     <Compile Include="Helpers\ArgumentsValidator.cs" />
     <Compile Include="Helpers\Constants.cs" />
-    <Compile Include="Helpers\CountBlocks.cs" />
     <Compile Include="Helpers\AdditionalDataManager.cs" />
     <Compile Include="Helpers\MemoryValidator.cs" />
     <Compile Include="Helpers\ProgressInfo.cs" />

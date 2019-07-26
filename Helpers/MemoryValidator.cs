@@ -14,16 +14,15 @@ namespace GZipTest.Helpers
             {
                 byte helpersDataAmount = 16;
                 int fullBlockSize = blockSize + helpersDataAmount;
-                var neededRam = CalculateMinimumNeededRam(fullBlockSize,ref borderCapacity);
+                var neededRam = CalculateMinimumNeededRam(fullBlockSize, borderCapacity);
                 var configRam = GetTotalMemory();
                 if (neededRam > configRam)
                     throw new Exception("The configuration of your computer is not available to run this program because the necessary amount of RAM is not installed.");
                 var freeRam = GetFreeMemory();
                 if (neededRam > freeRam)
                     throw new Exception("You don't have free RAM, try to close some applications to free RAM..");
-                //если необходимое кол-во памяти меньше чем 75% свободной оперативной памяти, то пересчитаем границу кол-ва блоков для эффективного использования оперативной памяти
-                if (neededRam < (freeRam - freeRam * 0.25))
-                    borderCapacity = SetAvailableBorderCapacity(freeRam, fullBlockSize);
+                //если необходимое кол-во памяти меньше чем 75% свободной оперативной памяти, то пересчитаем границу кол-ва блоков для эффективного использования оперативной памяти               
+                borderCapacity = SetAvailableBorderCapacity(freeRam, fullBlockSize, neededRam, borderCapacity);
                 return true;
             }
             catch (Exception e)
@@ -36,7 +35,7 @@ namespace GZipTest.Helpers
         /// <summary>
         /// устанавливаем границу кол-ва блоков для наиболее полного использования свободной оперативной памяти
         /// </summary>       
-        private static int SetAvailableBorderCapacity(long freeRam, int fullBlockSize)
+        public static int SetAvailableBorderCapacity(long freeRam, int fullBlockSize, long neededRam, int border)
         {
             checked
             {
@@ -44,12 +43,18 @@ namespace GZipTest.Helpers
                 {
                     //оставляем 25% памяти свободной
                     long freeRamWithoutSaveSpace = (long)(freeRam - freeRam * 0.25);
+                    if (neededRam > freeRamWithoutSaveSpace)
+                        return border;
                     //25% запас для работы приложения GZipTest
                     long ramForBlocks = (long)(freeRamWithoutSaveSpace - freeRamWithoutSaveSpace *0.25);
                     //всего кол-во блоков
                     long allCountBlocksAvailable = ramForBlocks / fullBlockSize;
                     //возвращаем границу количества блока для одного контейнера
-                    return (int)allCountBlocksAvailable / 2;
+                    int newBorderCapacity = (int)allCountBlocksAvailable / 2;
+                    if (newBorderCapacity < border)
+                        return border;
+                    else
+                        return newBorderCapacity;
                 }
                 catch (OverflowException e)
                 {
@@ -102,7 +107,7 @@ namespace GZipTest.Helpers
         /// <summary>
         /// расчет минимально необходимой памяти для нормальной работы программы
         /// </summary>         
-        private static long CalculateMinimumNeededRam(int blockSize, ref int borderCapacity)
+        public static long CalculateMinimumNeededRam(int blockSize, int borderCapacity)
         {
             checked
             {
