@@ -6,7 +6,8 @@ namespace GZipTest.Helpers
 {
     public class MemoryValidator
     {
-         
+
+        private static float FreeMemoryPersent = 0.3f;
         //FIX ME: возможно переполнение - включить проверку на переполнение 
         public static bool ValidateMemory(int blockSize, ref int borderCapacity)
         {
@@ -21,7 +22,7 @@ namespace GZipTest.Helpers
                 var freeRam = GetFreeMemory();
                 if (neededRam > freeRam)
                     throw new Exception("You don't have free RAM, try to close some applications to free RAM..");
-                //если необходимое кол-во памяти меньше чем 75% свободной оперативной памяти, то пересчитаем границу кол-ва блоков для эффективного использования оперативной памяти               
+                //если необходимое кол-во памяти меньше чем 70% свободной оперативной памяти, то пересчитаем границу кол-ва блоков для эффективного использования оперативной памяти               
                 borderCapacity = SetAvailableBorderCapacity(freeRam, fullBlockSize, neededRam, borderCapacity);
                 return true;
             }
@@ -41,12 +42,12 @@ namespace GZipTest.Helpers
             {
                 try
                 {
-                    //оставляем 25% памяти свободной
-                    long freeRamWithoutSaveSpace = (long)(freeRam - freeRam * 0.25);
+                    //оставляем 30% памяти свободной
+                    long freeRamWithoutSaveSpace = (long)(freeRam - freeRam * FreeMemoryPersent);
                     if (neededRam > freeRamWithoutSaveSpace)
                         return border;
                     //25% запас для работы приложения GZipTest
-                    long ramForBlocks = (long)(freeRamWithoutSaveSpace - freeRamWithoutSaveSpace *0.25);
+                    long ramForBlocks = (long)(freeRamWithoutSaveSpace - freeRamWithoutSaveSpace * FreeMemoryPersent);
                     //всего кол-во блоков
                     long allCountBlocksAvailable = ramForBlocks / fullBlockSize;
                     //возвращаем границу количества блока для одного контейнера
@@ -115,8 +116,8 @@ namespace GZipTest.Helpers
                 {
                     //умножаем на 2 - т.к. два контейнера для считанных данных и для обработанных(gzip) данных
                     long memoryForContainers = borderCapacity * blockSize * 2;
-                    //25% для работы приложения
-                    memoryForContainers += (long)(memoryForContainers * 0.25);
+                    //30% для работы приложения
+                    memoryForContainers += (long)(memoryForContainers * FreeMemoryPersent);
                     return memoryForContainers;
                 }
                 catch (OverflowException e)
