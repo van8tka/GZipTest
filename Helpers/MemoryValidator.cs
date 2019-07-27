@@ -5,9 +5,9 @@ using System.Management;
 namespace GZipTest.Helpers
 {
     /// <summary>
-    /// вычисляем минимальный необходимый размер оперативной памяти для работы приложения 
-    /// согласно минимально установленной границы кол-ва блоков BorderCapacity = 10;
-    /// получает доступную физическую память, и если физической памяти не хватает, то выводим сообщение о несоответствии конфигурации пк
+    /// по дефолту минимально установленную границу кол-ва блоков ставим равной: BorderCapacity = 10
+    /// вычисляем минимальный необходимый размер оперативной памяти для работы приложения исходя из BorderCapacity
+    /// получаем доступную физическую память, и если физической памяти не хватает, то выводим сообщение о несоответствии конфигурации пк
     /// далее если физ. памяти хватает проверяем доступную оперативную память, если её нехватает выводим сообщение о недостаточном кол-ве RAM
     /// если опер.памяти в достатке, то увеличиваем по возможности границу кол-ва блоков в соответствии с кол-вом свободной оперативной памяти, оставляя 30% свободной
     /// </summary>
@@ -68,7 +68,7 @@ namespace GZipTest.Helpers
                 }
                 catch (OverflowException e)
                 {
-                    Console.WriteLine("Total memory is too large, error overflow type.");
+                    Console.WriteLine("Total memory is too large, error overflow type."+e);
                     throw;
                 }
             }            
@@ -91,7 +91,7 @@ namespace GZipTest.Helpers
                 }
                 catch (OverflowException e)
                 {
-                    Console.WriteLine("Total memory is too large, error overflow type.");
+                    Console.WriteLine("Total memory is too large, error overflow type."+e);
                     throw;
                 }
             }
@@ -108,7 +108,7 @@ namespace GZipTest.Helpers
                 }
                 catch (OverflowException e)
                 {
-                    Console.WriteLine("Available memory is too large, error overflow type.");
+                    Console.WriteLine("Available memory is too large, error overflow type."+e);
                     throw;
                 }
             }
@@ -131,7 +131,7 @@ namespace GZipTest.Helpers
                 }
                 catch (OverflowException e)
                 {
-                    Console.WriteLine("Amount of needed memory is too large, error overflow type.");
+                    Console.WriteLine("Amount of needed memory is too large, error overflow type."+e);
                     throw;
                 }
             }
