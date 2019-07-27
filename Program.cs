@@ -1,6 +1,7 @@
 ﻿using GZipTest.Helpers;
 using GZipTest.Implementations;
 using System;
+using System.IO;
 
 namespace GZipTest
 {
@@ -26,6 +27,7 @@ namespace GZipTest
                     }
                     else
                     {
+                        ClearData(args[2]);
                         FinishMessage("Failure");
                     }
                 }
@@ -33,6 +35,12 @@ namespace GZipTest
             Console.WriteLine(" Push any key to continue..");
             Console.ReadKey();
             return result;
+        }
+
+        private static void ClearData(string outputFilePath)
+        {
+            if (File.Exists(outputFilePath))
+                File.Delete(outputFilePath);
         }
 
         private static void StartedMessage()

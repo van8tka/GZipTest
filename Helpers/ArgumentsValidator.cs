@@ -4,14 +4,14 @@ using System.Text.RegularExpressions;
 
 namespace GZipTest
 {
-    internal class ArgumentsValidator
+    public class ArgumentsValidator
     {
         /// <summary>
         /// метод проверки входных данных
         /// </summary>
         /// <param name="args">список аргументов проверки</param>
         /// <returns>true-валидные данные, false-невалидные</returns>
-        internal static bool Validate(string[] args)
+        public static bool Validate(string[] args)
         {
             string action;
             string input;
@@ -26,10 +26,7 @@ namespace GZipTest
                     success = true;
             }
             if (!success)
-            {
                 Console.WriteLine("Error input parameters.");
-                Console.ReadLine();
-            }
             return success;
         }
 

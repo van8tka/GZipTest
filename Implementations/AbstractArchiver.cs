@@ -18,27 +18,26 @@ namespace GZipTest.Implementations
             BlockProcessed = new CustomBlockingCollection(boundedCapacity);
             DataManager = new AdditionalDataManager();
             IsError = false;
-            BlockSize = blockSize;
-           
+            BlockSize = blockSize;          
         }
-       
-        private bool _disposedValue = false;
-        protected bool IsError;
+             
+        protected readonly AdditionalDataManager DataManager;
         protected readonly string InputFile;
         protected readonly string OutputFile;
-        protected int BlocksCount { get; set; }
-        protected int BlocksProcessedCount = 0;
         protected readonly int BlockSize;
+        protected int BlocksProcessedCount = 0;
+        private bool _disposedValue = false;
         protected EventWaitHandle[] EventWaitHandleArray;
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
-        protected readonly AdditionalDataManager DataManager;
+       
 
+        protected int BlocksCount { get; set; }
+        protected bool IsError { get; set; }
         protected CustomBlockingCollection BlockReaded { get; set; }
         protected CustomBlockingCollection BlockProcessed { get; set; }
 
         protected int CountProcessors() => Environment.ProcessorCount;
-
         public abstract bool Start();
 
         protected void WaitFinish()
@@ -72,11 +71,9 @@ namespace GZipTest.Implementations
                 _disposedValue = true;
             }
         }
-
         public void Dispose()
         {
             Dispose(true);
-        }
- 
+        } 
     }
 }
