@@ -2,8 +2,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Threading;
-
+ 
 namespace GZipTest.Implementations
 {
     internal class Compression : AbstractArchiver
@@ -13,38 +12,6 @@ namespace GZipTest.Implementations
         {
             BlocksCount = GetBlockCount(BlockSize);
         }
-
-        //public override bool Start()
-        //{
-        //    try
-        //    {
-        //        Console.WriteLine(" Started compressing..");
-        //        EventWaitHandleRead = new ManualResetEvent(false);
-        //        var threadRead = new Thread(ReadData);
-        //        threadRead.Name = "ReaderThread";
-        //        threadRead.Start();
-
-        //        var threads = new Thread[CountProcessors];
-        //        for (int i = 0; i < threads.Length; i++)
-        //        {
-        //            EventWaitHandleArray[i] = new ManualResetEvent(false);
-        //            threads[i] = new Thread(new ParameterizedThreadStart(CompressData));
-        //            threads[i].Name = $"ZipThred_{i}";
-        //            threads[i].Start(i);
-        //        }
-        //        EventWaitHandleWrite = new ManualResetEvent(false);
-        //        var threadWrite = new Thread(WriteData);
-        //        threadWrite.Name = "WriterThread";
-        //        threadWrite.Start();
-        //        WaitFinish();
-        //        return !IsError;
-        //    }            
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(Environment.NewLine + e);
-        //        return false;
-        //    }
-        //}
 
         protected override void ReadData()
         {
@@ -71,28 +38,20 @@ namespace GZipTest.Implementations
             }
             catch (OutOfMemoryException e)
             {
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file read. Please close other applications and try again. "+e);
-                IsError = true;               
+                ErrorOutput(e,"Not enough RAM to complete file read. Please close other applications and try again. ");                       
             }
             catch (Exception e)
             {
-                Console.WriteLine(Environment.NewLine + e);
-                IsError = true;                
+                ErrorOutput(e);
             }
             finally
             {
                 EventWaitHandleRead.Set();
             }
-        }
+        }      
         /// <summary>
-        /// добавление в массив байт 8 байт несущих доп. инф.: первые 4 байта - позиция массива байт, вторые 4 байта - размер файла до архивации
-        /// </summary>       
-        /// <returns>массив байт с добавленной доп. информацией 8 байт</returns>
-        private byte[] AddedHelpersData(long position, long lenght, byte[] bytes)
-        {
-            return DataManager.AddedHelpersDataToByteArray(position, DataManager.AddedHelpersDataToByteArray(lenght, bytes));
-        }
-
+        /// сжатие данных
+        /// </summary>        
         protected override void ProccessingData(object indexThread)
         {
             try
@@ -116,25 +75,21 @@ namespace GZipTest.Implementations
                     {
                         if (BlockReaded.IsFinish && BlocksProcessedCount == BlocksCount)
                             BlockProcessed.Finish();
-                     //   EventWaitHandleArray[(int)indexThread].Set();
                         return;
                     }
                 }           
             }
             catch(IOException e)
-            {               
-                Console.WriteLine(Environment.NewLine + "Unable to complete compression operation because of insufficient RAM. Please close other applications and try again. "+e);  
-                IsError = true;
+            {
+                ErrorOutput(e, "Unable to complete compression operation due to insufficient RAM. Please close other applications and try again. ");                
             }
             catch (OutOfMemoryException e)
             {
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again. "+e);
-                IsError = true;
+                ErrorOutput(e, "Not enough RAM to complete file compression. Please close other applications and try again. ");     
             }
             catch (Exception e)
             {
-                Console.WriteLine(Environment.NewLine + e);
-                IsError = true;
+                ErrorOutput(e);
             }
             finally
             {
@@ -169,7 +124,6 @@ namespace GZipTest.Implementations
                                 ProgressInfo.End();
                             else
                                 throw new Exception("Can't write all blocks");
-                          //  EventWaitHandleWrite.Set();
                             return;
                         }
                     }
@@ -177,18 +131,15 @@ namespace GZipTest.Implementations
             }
             catch (IOException e)
             {
-                Console.WriteLine(Environment.NewLine + "Unable to complete write operation because of insufficient RAM. Please close other applications and try again. "+e);  
-                IsError = true;
+                ErrorOutput(e, "Unable to complete write operation due to insufficient RAM. Please close other applications and try again. ");
             }
             catch (OutOfMemoryException e)
             {
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file write. Please close other applications and try again. "+e);
-                IsError = true;
+                ErrorOutput(e, "Not enough RAM to complete file write. Please close other applications and try again. ");
             }
             catch (Exception e)
             {
-                Console.WriteLine(Environment.NewLine + e);
-                IsError = true;              
+                ErrorOutput(e);                      
             }
             finally
             {
@@ -205,6 +156,14 @@ namespace GZipTest.Implementations
                 return 0;
             var file = new FileInfo(InputFile);
             return (int)Math.Ceiling((double)file.Length / blockSize);
+        }
+        /// <summary>
+        /// добавление в массив байт 8 байт несущих доп. инф.: первые 4 байта - позиция массива байт, вторые 4 байта - размер файла до архивации
+        /// </summary>       
+        /// <returns>массив байт с добавленной доп. информацией 8 байт</returns>
+        private byte[] AddedHelpersData(long position, long lenght, byte[] bytes)
+        {
+            return DataManager.AddedHelpersDataToByteArray(position, DataManager.AddedHelpersDataToByteArray(lenght, bytes));
         }
     }
 }

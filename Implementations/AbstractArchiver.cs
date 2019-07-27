@@ -32,7 +32,6 @@ namespace GZipTest.Implementations
         protected EventWaitHandle EventWaitHandleRead;
         protected EventWaitHandle EventWaitHandleWrite;
        
-
         protected int BlocksCount { get; set; }
         protected bool IsError { get; set; }
         protected CustomBlockingCollection BlockReaded { get; set; }
@@ -84,6 +83,12 @@ namespace GZipTest.Implementations
             foreach (var e in handle)
                 e.WaitOne();
           //  WaitHandle.WaitAll(handle);
+        }
+
+        protected void ErrorOutput( Exception e, string message = default)
+        {
+            Console.WriteLine(Environment.NewLine + message + e);
+            IsError = true;
         }
 
         public static AbstractArchiver CreateArchiver(string action, string input, string output, int blockSize, int boundedCapacity)

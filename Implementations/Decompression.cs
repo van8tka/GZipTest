@@ -2,47 +2,12 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Threading;
 
 namespace GZipTest.Implementations
 {
     internal class Decompression : AbstractArchiver
     {
         internal Decompression(string input, string output, int blockSize, int boundedCapacity) : base(input, output, blockSize, boundedCapacity) { }
-
-        //public override bool Start()
-        //{
-        //    try
-        //    {
-        //        Console.WriteLine(" Started decompressing..");
-        //        EventWaitHandleRead = new ManualResetEvent(false);
-        //        var threadRead = new Thread(ReadData);
-        //        threadRead.Name = "ReaderThread";
-        //        threadRead.Start();
-
-        //        var threads = new Thread[CountProcessors];
-        //        for (int i = 0; i < threads.Length; i++)
-        //        {
-        //            EventWaitHandleArray[i] = new ManualResetEvent(false);
-        //            threads[i] = new Thread(new ParameterizedThreadStart(DecompressData));
-        //            threads[i].Name = $"ZipThred_{i}";
-        //            threads[i].Start(i);
-        //        }
-        //        EventWaitHandleWrite = new ManualResetEvent(false);
-        //        var threadWrite = new Thread(WriteData);
-        //        threadWrite.Name = "WriterThread";
-        //        threadWrite.Start();
-        //        WaitFinish();
-        //        return !IsError;
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(Environment.NewLine + e);
-        //        return false;
-        //    }
-        //}
-
-
 
         protected override void ReadData()
         {
@@ -66,22 +31,18 @@ namespace GZipTest.Implementations
                 }
             }
             catch (OutOfMemoryException e)
-            {             
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file read. Please close other applications and try again. "+e);
-                IsError = true;
+            {
+                ErrorOutput(e, "Not enough RAM to complete file read. Please close other applications and try again. ");
             }
             catch (Exception e)
             {
-                Console.WriteLine(Environment.NewLine + e);
-                IsError = true;              
+                ErrorOutput(e);
             }
             finally
             {
                 EventWaitHandleRead.Set();
             }
         }
-
-
 
         protected override void ProccessingData(object indexThread)
         {
@@ -114,49 +75,27 @@ namespace GZipTest.Implementations
                     {
                         if (BlockReaded.IsFinish && BlocksProcessedCount == BlocksCount)
                             BlockProcessed.Finish();
-                       // EventWaitHandleArray[(int)indexThread].Set();
                         return;
                     }
                 }              
             }
             catch (IOException e)
-            {             
-                Console.WriteLine(Environment.NewLine + "Unable to complete decompression operation because of insufficient RAM. Please close other applications and try again. "+e);
-                IsError = true;
+            {
+                ErrorOutput(e, "Unable to complete decompression operation due to insufficient RAM. Please close other applications and try again. ");
             }
             catch (OutOfMemoryException e)
             {
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again. "+e);
-                IsError = true;
+                ErrorOutput(e, "Not enough RAM to complete file decompression. Please close other applications and try again. ");
             }
             catch (Exception e)
             {
-                Console.WriteLine(Environment.NewLine + e);
-                IsError = true;               
+                ErrorOutput(e);
             }
             finally
             {
                 EventWaitHandleArray[(int)indexThread].Set();
             }
-        }
-        /// <summary>
-        /// метод для получения позиции массива байт, размера файла до архивации, и массив байт несущих полезную нагрузку(данных файла) 
-        /// </summary>       
-        private byte[] GetHelpersData(out long position, out long sizefile, byte[] data)
-        {
-            var tempBytes = DataManager.GetHelpersDataFromByteArray(data, out position);
-            tempBytes = DataManager.GetHelpersDataFromByteArray(tempBytes, out sizefile);
-            if (BlocksCount == 0)
-                BlocksCount = GetBlockCount(BlockSize, sizefile);
-            return tempBytes;
-        }
-        /// <summary>
-        /// метод получения общего количества блоков исходя из размера файла 
-        /// </summary>      
-        private int GetBlockCount(int blockSize, long sizefile)
-        {
-            return (int)Math.Ceiling((double)sizefile / blockSize);
-        }
+        }       
 
         protected override void WriteData()
         {
@@ -188,30 +127,45 @@ namespace GZipTest.Implementations
                             ProgressInfo.End();
                         else
                             throw new Exception("Can't write all blocks");
-                     //   EventWaitHandleWrite.Set();
                         return;
                     }
                 }              
             }
             catch (IOException e)
-            {               
-                Console.WriteLine(Environment.NewLine + "Unable to complete write operation because of insufficient RAM.Please close other applications and try again. "+e);
-                IsError = true;
+            {
+                ErrorOutput(e, "Unable to complete write operation due to insufficient RAM. Please close other applications and try again. ");
             }
             catch (OutOfMemoryException e)
             {
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file write. Please close other applications and try again. "+e);
-                IsError = true;
+                ErrorOutput(e, "Not enough RAM to complete file write. Please close other applications and try again. ");
             }
             catch (Exception e)
             {
-                Console.WriteLine(Environment.NewLine + e);
-                IsError = true;               
+                ErrorOutput(e);
             }
             finally
             {
                 EventWaitHandleWrite.Set();
             }
+        }
+
+        /// <summary>
+        /// метод для получения позиции массива байт, размера файла до архивации, и массив байт несущих полезную нагрузку(данных файла) 
+        /// </summary>       
+        private byte[] GetHelpersData(out long position, out long sizefile, byte[] data)
+        {
+            var tempBytes = DataManager.GetHelpersDataFromByteArray(data, out position);
+            tempBytes = DataManager.GetHelpersDataFromByteArray(tempBytes, out sizefile);
+            if (BlocksCount == 0)
+                BlocksCount = GetBlockCount(BlockSize, sizefile);
+            return tempBytes;
+        }
+        /// <summary>
+        /// метод получения общего количества блоков исходя из размера файла 
+        /// </summary>      
+        private int GetBlockCount(int blockSize, long sizefile)
+        {
+            return (int)Math.Ceiling((double)sizefile / blockSize);
         }
     }
 }
