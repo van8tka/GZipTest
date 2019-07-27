@@ -10,41 +10,41 @@ namespace GZipTest.Implementations
     {
         internal Decompression(string input, string output, int blockSize, int boundedCapacity) : base(input, output, blockSize, boundedCapacity) { }
 
-        public override bool Start()
-        {
-            try
-            {
-                Console.WriteLine(" Started decompressing..");
-                EventWaitHandleRead = new ManualResetEvent(false);
-                var threadRead = new Thread(ReadData);
-                threadRead.Name = "ReaderThread";
-                threadRead.Start();
+        //public override bool Start()
+        //{
+        //    try
+        //    {
+        //        Console.WriteLine(" Started decompressing..");
+        //        EventWaitHandleRead = new ManualResetEvent(false);
+        //        var threadRead = new Thread(ReadData);
+        //        threadRead.Name = "ReaderThread";
+        //        threadRead.Start();
 
-                var threads = new Thread[CountProcessors];
-                for (int i = 0; i < threads.Length; i++)
-                {
-                    EventWaitHandleArray[i] = new ManualResetEvent(false);
-                    threads[i] = new Thread(new ParameterizedThreadStart(DecompressData));
-                    threads[i].Name = $"ZipThred_{i}";
-                    threads[i].Start(i);
-                }
-                EventWaitHandleWrite = new ManualResetEvent(false);
-                var threadWrite = new Thread(WriteData);
-                threadWrite.Name = "WriterThread";
-                threadWrite.Start();
-                WaitFinish();
-                return !IsError;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(Environment.NewLine + e);
-                return false;
-            }
-        }
+        //        var threads = new Thread[CountProcessors];
+        //        for (int i = 0; i < threads.Length; i++)
+        //        {
+        //            EventWaitHandleArray[i] = new ManualResetEvent(false);
+        //            threads[i] = new Thread(new ParameterizedThreadStart(DecompressData));
+        //            threads[i].Name = $"ZipThred_{i}";
+        //            threads[i].Start(i);
+        //        }
+        //        EventWaitHandleWrite = new ManualResetEvent(false);
+        //        var threadWrite = new Thread(WriteData);
+        //        threadWrite.Name = "WriterThread";
+        //        threadWrite.Start();
+        //        WaitFinish();
+        //        return !IsError;
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine(Environment.NewLine + e);
+        //        return false;
+        //    }
+        //}
 
 
 
-        private void ReadData()
+        protected override void ReadData()
         {
             try
             {
@@ -83,7 +83,7 @@ namespace GZipTest.Implementations
 
 
 
-        private void DecompressData(object indexThread)
+        protected override void ProccessingData(object indexThread)
         {
             try
             {
@@ -158,7 +158,7 @@ namespace GZipTest.Implementations
             return (int)Math.Ceiling((double)sizefile / blockSize);
         }
 
-        private void WriteData()
+        protected override void WriteData()
         {
             try
             {

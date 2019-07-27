@@ -39,8 +39,42 @@ namespace GZipTest.Implementations
         protected CustomBlockingCollection BlockProcessed { get; set; }
         protected int CountProcessors {get;set;}
         private int GetCountProcessors() => Environment.ProcessorCount;
-        public abstract bool Start();
+       
+        protected abstract void ProccessingData(object indexThread);
+        protected abstract void ReadData();
+        protected abstract void WriteData();
 
+        public bool Start()
+        {
+            try
+            {              
+                EventWaitHandleRead = new ManualResetEvent(false);
+                var threadRead = new Thread(ReadData);
+                threadRead.Name = "ReaderThread";
+                threadRead.Start();
+
+                var threads = new Thread[CountProcessors];
+                for (int i = 0; i < threads.Length; i++)
+                {
+                    EventWaitHandleArray[i] = new ManualResetEvent(false);
+                    threads[i] = new Thread(new ParameterizedThreadStart(ProccessingData));
+                    threads[i].Name = $"ZipThred_{i}";
+                    threads[i].Start(i);
+                }
+                EventWaitHandleWrite = new ManualResetEvent(false);
+                var threadWrite = new Thread(WriteData);
+                threadWrite.Name = "WriterThread";
+                threadWrite.Start();
+                WaitFinish();
+                return !IsError;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(Environment.NewLine + e);
+                return false;
+            }
+        }
+  
         protected void WaitFinish()
         {
             var handle = new WaitHandle[EventWaitHandleArray.Length + 2];
@@ -55,9 +89,15 @@ namespace GZipTest.Implementations
         public static AbstractArchiver CreateArchiver(string action, string input, string output, int blockSize, int boundedCapacity)
         {
             if (action.Equals(Constants.COMPRESS, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine(" Started compressing..");
                 return new Compression(input, output, blockSize, boundedCapacity);
+            }              
             else
+            {
+                Console.WriteLine(" Started decompressing..");
                 return new Decompression(input, output, blockSize, boundedCapacity);
+            }                
         }
 
         protected virtual void Dispose(bool disposing)

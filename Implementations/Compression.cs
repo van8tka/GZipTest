@@ -14,39 +14,39 @@ namespace GZipTest.Implementations
             BlocksCount = GetBlockCount(BlockSize);
         }
 
-        public override bool Start()
-        {
-            try
-            {
-                Console.WriteLine(" Started compressing..");
-                EventWaitHandleRead = new ManualResetEvent(false);
-                var threadRead = new Thread(ReadData);
-                threadRead.Name = "ReaderThread";
-                threadRead.Start();
+        //public override bool Start()
+        //{
+        //    try
+        //    {
+        //        Console.WriteLine(" Started compressing..");
+        //        EventWaitHandleRead = new ManualResetEvent(false);
+        //        var threadRead = new Thread(ReadData);
+        //        threadRead.Name = "ReaderThread";
+        //        threadRead.Start();
 
-                var threads = new Thread[CountProcessors];
-                for (int i = 0; i < threads.Length; i++)
-                {
-                    EventWaitHandleArray[i] = new ManualResetEvent(false);
-                    threads[i] = new Thread(new ParameterizedThreadStart(CompressData));
-                    threads[i].Name = $"ZipThred_{i}";
-                    threads[i].Start(i);
-                }
-                EventWaitHandleWrite = new ManualResetEvent(false);
-                var threadWrite = new Thread(WriteData);
-                threadWrite.Name = "WriterThread";
-                threadWrite.Start();
-                WaitFinish();
-                return !IsError;
-            }            
-            catch (Exception e)
-            {
-                Console.WriteLine(Environment.NewLine + e);
-                return false;
-            }
-        }
+        //        var threads = new Thread[CountProcessors];
+        //        for (int i = 0; i < threads.Length; i++)
+        //        {
+        //            EventWaitHandleArray[i] = new ManualResetEvent(false);
+        //            threads[i] = new Thread(new ParameterizedThreadStart(CompressData));
+        //            threads[i].Name = $"ZipThred_{i}";
+        //            threads[i].Start(i);
+        //        }
+        //        EventWaitHandleWrite = new ManualResetEvent(false);
+        //        var threadWrite = new Thread(WriteData);
+        //        threadWrite.Name = "WriterThread";
+        //        threadWrite.Start();
+        //        WaitFinish();
+        //        return !IsError;
+        //    }            
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine(Environment.NewLine + e);
+        //        return false;
+        //    }
+        //}
 
-        private void ReadData()
+        protected override void ReadData()
         {
             try
             {
@@ -93,7 +93,7 @@ namespace GZipTest.Implementations
             return DataManager.AddedHelpersDataToByteArray(position, DataManager.AddedHelpersDataToByteArray(lenght, bytes));
         }
 
-        private void CompressData(object indexThread)
+        protected override void ProccessingData(object indexThread)
         {
             try
             {
@@ -142,7 +142,7 @@ namespace GZipTest.Implementations
             }
         }
 
-        private void WriteData()
+        protected override void WriteData()
         {
             try
             {
