@@ -123,9 +123,8 @@ namespace GZipTest.Implementations
                 }           
             }
             catch(IOException e)
-            {
-                Debugger.Break();
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
+            {               
+                Console.WriteLine(Environment.NewLine + "Unable to complete compression operation because of insufficient RAM. Please close other applications and try again.");  
                 IsError = true;
             }
             catch (OutOfMemoryException e)
@@ -179,8 +178,7 @@ namespace GZipTest.Implementations
             }
             catch (IOException e)
             {
-                Debugger.Break();
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
+                Console.WriteLine(Environment.NewLine + "Unable to complete write operation because of insufficient RAM. Please close other applications and try again.");  
                 IsError = true;
             }
             catch (OutOfMemoryException)
@@ -191,8 +189,7 @@ namespace GZipTest.Implementations
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
-                IsError = true;
-              
+                IsError = true;              
             }
             finally
             {

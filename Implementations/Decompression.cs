@@ -1,6 +1,5 @@
 ﻿using GZipTest.Models;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -67,8 +66,7 @@ namespace GZipTest.Implementations
                 }
             }
             catch (OutOfMemoryException)
-            {
-                Debugger.Break();
+            {             
                 Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again.");
                 IsError = true;
             }
@@ -122,22 +120,19 @@ namespace GZipTest.Implementations
                 }              
             }
             catch (IOException e)
-            {
-                Debugger.Break();
-                Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
+            {             
+                Console.WriteLine(Environment.NewLine + "Unable to complete decompression operation because of insufficient RAM. Please close other applications and try again.");
                 IsError = true;
             }
             catch (OutOfMemoryException)
             {
-                Debugger.Break();
                 Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again.");
                 IsError = true;
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
-                IsError = true;
-                
+                IsError = true;               
             }
             finally
             {
@@ -199,22 +194,19 @@ namespace GZipTest.Implementations
                 }              
             }
             catch (IOException e)
-            {
-                Debugger.Break();
+            {               
                 Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file compression. Please close other applications and try again.");
                 IsError = true;
             }
             catch (OutOfMemoryException)
             {
-                Debugger.Break();
                 Console.WriteLine(Environment.NewLine + "Not enough RAM to complete file decompression. Please close other applications and try again.");
                 IsError = true;
             }
             catch (Exception e)
             {
                 Console.WriteLine(Environment.NewLine + e);
-                IsError = true;
-               
+                IsError = true;               
             }
             finally
             {
