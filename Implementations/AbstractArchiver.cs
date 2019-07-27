@@ -13,7 +13,8 @@ namespace GZipTest.Implementations
         {
             InputFile = input;
             OutputFile = output;
-            EventWaitHandleArray = new ManualResetEvent[CountProcessors()];
+            CountProcessors = GetCountProcessors();
+            EventWaitHandleArray = new ManualResetEvent[CountProcessors];
             BlockReaded = new CustomBlockingCollection(boundedCapacity);
             BlockProcessed = new CustomBlockingCollection(boundedCapacity);
             DataManager = new AdditionalDataManager();
@@ -36,8 +37,8 @@ namespace GZipTest.Implementations
         protected bool IsError { get; set; }
         protected CustomBlockingCollection BlockReaded { get; set; }
         protected CustomBlockingCollection BlockProcessed { get; set; }
-
-        protected int CountProcessors() => Environment.ProcessorCount;
+        protected int CountProcessors {get;set;}
+        private int GetCountProcessors() => Environment.ProcessorCount;
         public abstract bool Start();
 
         protected void WaitFinish()
@@ -46,7 +47,9 @@ namespace GZipTest.Implementations
             EventWaitHandleArray.CopyTo(handle, 2);
             handle[0] = EventWaitHandleRead;
             handle[1] = EventWaitHandleWrite;
-            WaitHandle.WaitAll(handle);
+            foreach (var e in handle)
+                e.WaitOne();
+          //  WaitHandle.WaitAll(handle);
         }
 
         public static AbstractArchiver CreateArchiver(string action, string input, string output, int blockSize, int boundedCapacity)
