@@ -1,6 +1,6 @@
 ﻿namespace GZipTest.Interfaces
 {
-    internal interface IArchiver
+    public interface IArchiver
     {
         /// <summary>
         /// запуск работы архиватора
