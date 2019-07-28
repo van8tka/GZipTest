@@ -46,9 +46,7 @@ namespace GZipTest.Implementations
         public bool Start()
         {
             try
-            {
-                var st = new Stopwatch();
-                st.Start();
+            {            
                 EventWaitHandleRead = new ManualResetEvent(false);
                 var threadRead = new Thread(ReadData);
                 threadRead.Name = "ReaderThread";
@@ -67,10 +65,6 @@ namespace GZipTest.Implementations
                 threadWrite.Name = "WriterThread";
                 threadWrite.Start();
                 WaitFinish();
-
-                st.Stop();
-                Console.WriteLine($"Elaps {TimeSpan.FromTicks(st.ElapsedTicks).TotalMilliseconds}");
-
                 return !IsError;
             }
             catch (Exception e)
