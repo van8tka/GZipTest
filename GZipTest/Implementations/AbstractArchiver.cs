@@ -82,7 +82,6 @@ namespace GZipTest.Implementations
             handle[1] = EventWaitHandleWrite;
             foreach (var e in handle)
                 e.WaitOne();
-          //  WaitHandle.WaitAll(handle);
         }
 
         protected void ErrorOutput( Exception e, string message = default)

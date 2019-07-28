@@ -14,16 +14,19 @@ namespace GZipTest.Implementations
             try
             {
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
-                {                  
+                {
+                    byte[] headerGzip;
+                    byte[] bytes;
+                    int lenghtBlock;
                     while (input.Position < input.Length && !IsError)
                     {
                         //читаем заголовок запакованного блока и получаем размер полезной нагрузки указанной при записи
-                        var headerGzip = new byte[8];
+                        headerGzip = new byte[8];
                         input.Read(headerGzip, 0, headerGzip.Length);
-                        int lenghtBlock = BitConverter.ToInt32(headerGzip, 4);
-                        var bytes = new byte[lenghtBlock];
+                        lenghtBlock = BitConverter.ToInt32(headerGzip, 4);
+                        bytes = new byte[lenghtBlock];
                         headerGzip.CopyTo(bytes, 0);
-                        input.Read(bytes, 8, lenghtBlock - 8);
+                        input.Read(bytes, headerGzip.Length, lenghtBlock - headerGzip.Length);
                         BlockReaded.AddBlock(new BlockData(bytes));                     
                     }
                     BlockReaded.Finish();
@@ -48,6 +51,12 @@ namespace GZipTest.Implementations
         {
             try
             {
+                byte[] hederBytes;
+                int lenghtBlock;
+                int dataLenght;
+                byte[] data;
+                long position;
+                long sizefile;
                 while (true && !IsError)
                 {
                     BlockData block;
@@ -57,14 +66,12 @@ namespace GZipTest.Implementations
                         {
                             using (var gzipStream = new GZipStream(memStream, CompressionMode.Decompress))
                             {
-                                byte[] hederBytes = new byte[4] { block.Bytes[4], block.Bytes[5], block.Bytes[6], block.Bytes[7] };
-                                int lenghtBlock = BitConverter.ToInt32(hederBytes, 0);
-                                int dataLenght = BitConverter.ToInt32(block.Bytes, lenghtBlock - 4);
-                                byte[] data = new byte[dataLenght];
+                                hederBytes = new byte[4] { block.Bytes[4], block.Bytes[5], block.Bytes[6], block.Bytes[7] };
+                                lenghtBlock = BitConverter.ToInt32(hederBytes, 0);
+                                dataLenght = BitConverter.ToInt32(block.Bytes, lenghtBlock - 4);
+                                data = new byte[dataLenght];
                                 gzipStream.Read(data, 0, dataLenght);
                                 //отделяем от data первые 8 байт - 4 байта позиция записи, 4 байта размер файла
-                                long position;
-                                long sizefile;
                                 data = GetHelpersData(out position, out sizefile, data);
                                 BlockProcessed.AddBlock(new BlockData(position, sizefile, data));
                                 BlocksProcessedCount++;

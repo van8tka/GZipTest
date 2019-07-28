@@ -9,9 +9,8 @@ namespace GZipTest
     {
         //размер считываемого блока
        private static int BlockSize = 1024 * 1024;
-        //установим минимальное кол-во блоков для одного контейнера
-        //приналичии достаточного кол-ва RAM увеличим это значение
-       private static int BorderCapacity = 10;
+       //установим максимальное кол-во блоков для одного контейнера       
+       private static int BorderCapacity = 24;
 
         private static int Main(string[] args)
         {

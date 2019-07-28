@@ -20,14 +20,15 @@ namespace GZipTest.Implementations
                 using (var input = new FileStream(InputFile, FileMode.Open, FileAccess.Read))
                 {
                     var lenght = input.Length;
+                    int readCount;
+                    byte[] bytes;
                     while (input.Position < lenght && !IsError)
-                    {
-                        int readCount;
+                    {                       
                         if (lenght - input.Position < BlockSize)
                             readCount = (int)(lenght - input.Position);
                         else
                             readCount = BlockSize;
-                        var bytes = new byte[readCount];
+                        bytes = new byte[readCount];
                         input.Read(bytes, 0, readCount);
                         //добавим доп инф. о позиции массива байт в файле и размере файла
                         bytes = AddedHelpersData(input.Position - readCount, lenght, bytes);
@@ -56,9 +57,9 @@ namespace GZipTest.Implementations
         {
             try
             {
+                BlockData block;
                 while (true && !IsError)
-                {
-                    BlockData block;
+                {                   
                     if (BlockReaded.TryTakeBlock(out block))
                     {
                         using (var memStream = new MemoryStream())
@@ -102,15 +103,16 @@ namespace GZipTest.Implementations
             try
             {
                 int blocksWrite = 0;
+                BlockData block;
+                byte[] lenghtOfBlock;
                 while (true && !IsError)
                 {
                     using (var outputStream = new FileStream(OutputFile, FileMode.Append, FileAccess.Write))
-                    {
-                        BlockData block;
+                    {                        
                         if (BlockProcessed.TryTakeBlock(out block))
                         {
                             //получим размер сжатых данных для последующей декомпрессии
-                            var lenghtOfBlock = BitConverter.GetBytes(block.Bytes.Length);
+                            lenghtOfBlock = BitConverter.GetBytes(block.Bytes.Length);
                             /*запишем информацию о размере блока для последующей декомперссии и записи, вместо
                              времени модификации файла в формате  MTIME  (согласно спецификации gzip) */
                             lenghtOfBlock.CopyTo(block.Bytes, 4);
