@@ -7,7 +7,7 @@ namespace GZipTest.Implementations
 {
     internal class Decompression : AbstractArchiver
     {
-        internal Decompression(string input, string output, int blockSize, int boundedCapacity) : base(input, output, blockSize, boundedCapacity) { }
+        internal Decompression(string input, string output, int blockSize, int boundedCapacity, int countProccessingThreads) : base(input, output, blockSize, boundedCapacity, countProccessingThreads) { }
 
         protected override void ReadData()
         {

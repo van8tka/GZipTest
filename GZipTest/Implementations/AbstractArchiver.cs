@@ -2,6 +2,7 @@
 using GZipTest.Interfaces;
 using GZipTest.Models;
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace GZipTest.Implementations
@@ -9,12 +10,12 @@ namespace GZipTest.Implementations
     public abstract class AbstractArchiver : IArchiver, IDisposable
     {
         //ctor
-        protected AbstractArchiver(string input, string output, int blockSize, int boundedCapacity)
+        protected AbstractArchiver(string input, string output, int blockSize, int boundedCapacity, int countProccessingThread)
         {
             InputFile = input;
             OutputFile = output;
-            CountProcessors = GetCountProcessors();
-            EventWaitHandleArray = new ManualResetEvent[CountProcessors];
+            CountProccessingThreads = countProccessingThread;
+            EventWaitHandleArray = new ManualResetEvent[CountProccessingThreads];
             BlockReaded = new CustomBlockingCollection(boundedCapacity);
             BlockProcessed = new CustomBlockingCollection(boundedCapacity);
             DataManager = new AdditionalDataManager();
@@ -36,8 +37,7 @@ namespace GZipTest.Implementations
         protected bool IsError { get; set; }
         protected CustomBlockingCollection BlockReaded { get; set; }
         protected CustomBlockingCollection BlockProcessed { get; set; }
-        protected int CountProcessors {get;set;}
-        private int GetCountProcessors() => Environment.ProcessorCount;
+        protected int CountProccessingThreads {get;set;}
        
         protected abstract void ProccessingData(object indexThread);
         protected abstract void ReadData();
@@ -46,13 +46,15 @@ namespace GZipTest.Implementations
         public bool Start()
         {
             try
-            {              
+            {
+                var st = new Stopwatch();
+                st.Start();
                 EventWaitHandleRead = new ManualResetEvent(false);
                 var threadRead = new Thread(ReadData);
                 threadRead.Name = "ReaderThread";
                 threadRead.Start();
 
-                var threads = new Thread[CountProcessors];
+                var threads = new Thread[CountProccessingThreads];
                 for (int i = 0; i < threads.Length; i++)
                 {
                     EventWaitHandleArray[i] = new ManualResetEvent(false);
@@ -65,6 +67,10 @@ namespace GZipTest.Implementations
                 threadWrite.Name = "WriterThread";
                 threadWrite.Start();
                 WaitFinish();
+
+                st.Stop();
+                Console.WriteLine($"Elaps {TimeSpan.FromTicks(st.ElapsedTicks).TotalMilliseconds}");
+
                 return !IsError;
             }
             catch (Exception e)
@@ -90,17 +96,17 @@ namespace GZipTest.Implementations
             IsError = true;
         }
 
-        public static AbstractArchiver CreateArchiver(string action, string input, string output, int blockSize, int boundedCapacity)
+        public static AbstractArchiver CreateArchiver(string action, string input, string output, int blockSize, int boundedCapacity, int countProccessingThread)
         {
             if (action.Equals(Constants.COMPRESS, StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine(" Started compressing..");
-                return new Compression(input, output, blockSize, boundedCapacity);
+                return new Compression(input, output, blockSize, boundedCapacity, countProccessingThread);
             }              
             else
             {
                 Console.WriteLine(" Started decompressing..");
-                return new Decompression(input, output, blockSize, boundedCapacity);
+                return new Decompression(input, output, blockSize, boundedCapacity, countProccessingThread);
             }                
         }
 

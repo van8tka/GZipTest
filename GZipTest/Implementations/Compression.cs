@@ -8,7 +8,7 @@ namespace GZipTest.Implementations
     internal class Compression : AbstractArchiver
     {
         //ctor
-        internal Compression(string input, string output, int blockSize, int boundedCapacity) : base(input, output, blockSize, boundedCapacity)
+        internal Compression(string input, string output, int blockSize, int boundedCapacity, int countProccessingThreads) : base(input, output, blockSize, boundedCapacity, countProccessingThreads)
         {
             BlocksCount = GetBlockCount(BlockSize);
         }

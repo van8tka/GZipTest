@@ -8,11 +8,11 @@ namespace GZipTest.Helpers
     public class MemoryValidator
     {
          
-        public static bool ValidateMemory(int blockSize, ref int borderCapacity)
+        public static bool ValidateMemory(int blockSize, int borderCapacity, int countProccessingThreads)
         {
             try
             {             
-                var neededRam = CalculateMinimumNeededRam(blockSize, borderCapacity);
+                var neededRam = CalculateMinimumNeededRam(blockSize, borderCapacity, countProccessingThreads);
                 var configRam = GetTotalMemory();
                 if (neededRam > configRam)
                     throw new Exception("The configuration of your computer is not available to run this program because the necessary amount of RAM is not installed.");
@@ -71,16 +71,16 @@ namespace GZipTest.Helpers
         /// <summary>
         /// расчет минимально необходимой памяти для нормальной работы программы  
         /// </summary>         
-        public static long CalculateMinimumNeededRam(int blockSize, int borderCapacity)
+        public static long CalculateMinimumNeededRam(int blockSize, int borderCapacity, int countProccessingThreads)
         {
             checked
             {
                 try
                 {                   
-                    //умножаем на 2 - т.к. два контейнера для считанных данных и для обработанных(gzip) данных
-                    long memoryForContainers = borderCapacity * GetFullBlockSize(blockSize) * 2;
-                    // для работы приложения увеличим необходимую память втрое
-                    memoryForContainers = memoryForContainers * 3;
+                    //умножаем на 2 - т.к. два контейнера для считанных данных и для обработанных(gzip) данных? 
+                    long memoryForContainers = borderCapacity * GetFullBlockSize(blockSize) * 2;   
+                    //увеличим необходимую память в двое для безопасной работы приложения
+                    memoryForContainers = memoryForContainers * 2 + GetMemoryProccessingThreads(countProccessingThreads);  
                     return memoryForContainers;
                 }
                 catch (OverflowException e)
@@ -90,6 +90,14 @@ namespace GZipTest.Helpers
                 }
             }
         }
+
+        private static long GetMemoryProccessingThreads(int countThread)
+        {
+            //для одного потока сжатия\разжатия неободимо около 20 мб памяти
+            int oneProccessingThreadMemory = 25 * 1024 * 1024;          
+            return countThread * oneProccessingThreadMemory;
+        }
+
         /// <summary>
         ///    //добавляем 16 байт которые используются для сохранения в блоке позиции данных считанных с файла(8 байт-тип long ) и размера файла(8 байт тип long)  
         /// </summary>
