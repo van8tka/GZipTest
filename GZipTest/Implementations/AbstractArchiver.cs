@@ -2,7 +2,6 @@
 using GZipTest.Interfaces;
 using GZipTest.Models;
 using System;
-using System.Diagnostics;
 using System.Threading;
 
 namespace GZipTest.Implementations
@@ -74,7 +73,7 @@ namespace GZipTest.Implementations
             }
         }
   
-        protected void WaitFinish()
+        private void WaitFinish()
         {
             var handle = new WaitHandle[EventWaitHandleArray.Length + 2];
             EventWaitHandleArray.CopyTo(handle, 2);
